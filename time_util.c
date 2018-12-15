@@ -11,7 +11,7 @@ int set_timer(int seconds){
     //disabling the periodic timer
     timer.it_interval.tv_sec = 0;
     timer.it_interval.tv_usec = 0;
-    //settind the timer
+    //setting the timer
     timer.it_value.tv_sec = seconds;
     timer.it_value.tv_usec = 0;
 
