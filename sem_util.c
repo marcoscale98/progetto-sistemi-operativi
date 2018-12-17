@@ -2,21 +2,29 @@
 #include <sys/sem.h>
 #include "header/sem_util.h"
 
-// Initialize semaphore to 1 (i.e., "available")
+// Inizializzazione del semaforo a valore inserito da utente
+int initSem(int semId, int semNum, int semVal) {
+   union semun arg;
+   arg.val = semVal;
+   return semctl(semId, semNum, SETVAL, arg);
+}
+
+
+// Inizializzazione del semaforo a 1 (i.e., "available")
 int initSemAvailable(int semId, int semNum) {
    union semun arg;
    arg.val = 1;
    return semctl(semId, semNum, SETVAL, arg);
 }
 
-// Initialize semaphore to 0 (i.e., "in use")
+// Inizializzazione del semaforo a 0 (i.e., "in use")
 int initSemInUse(int semId, int semNum) {
    union semun arg;
    arg.val = 0;
    return semctl(semId, semNum, SETVAL, arg);
 }
 
-// Reserve semaphore - decrement it by 1
+// Reserve semaphore - decremento di 1
 int reserveSem(int semId, int semNum) {
    struct sembuf sops;
    sops.sem_num = semNum;
@@ -25,7 +33,7 @@ int reserveSem(int semId, int semNum) {
    return semop(semId, &sops, 1);
 }
 
-// Release semaphore - increment it by 1
+// Release semaphore - incremento di 1
 int releaseSem(int semId, int semNum) {
    struct sembuf sops;
    sops.sem_num = semNum;
