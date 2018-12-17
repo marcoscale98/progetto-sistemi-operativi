@@ -14,17 +14,19 @@ union semun {
     struct seminfo* __buf;
    #endif
 };
+// Inizializzazione semaforo a valore inserito da utente
+int initSem(int semId, int semNum, int semVal);
 
-// Initialize semaphore to 1 (i.e., "available")
+// Inizializzazione del semaforo a 1 (i.e., "available")
 int initSemAvailable(int semId, int semNum);
 
-// Initialize semaphore to 0 (i.e., "in use")
+// Inizializzazione del semaforo a 1 0 (i.e., "in use")
 int initSemInUse(int semId, int semNum);
 
-// Reserve semaphore - decrement it by 1
+// Reserve semaphore - decremento di 1
 int reserveSem(int semId, int semNum);
 
-// Release semaphore - increment it by 1
+// Release semaphore - incremento di 1
 int releaseSem(int semId, int semNum);
 
 #endif
