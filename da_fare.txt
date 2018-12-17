@@ -1,0 +1,20 @@
+Gestore:
+    - Sistemare semaforo
+    - timer e segnali
+    - gestione SIGALRM timer per fa stoppare gli student
+    - gestione del voto e invio agli student
+
+Inviti:
+    - coda di messaggi (una sola)
+    - tipo del messaggio: pid del destinatario
+    - messaggio: invito
+        - "<PID> invito": invito (per esempio)
+        - "accetto" ..
+        - "rifiuto" ..
+
+Studente:
+    (memoria condivisa: voti, matricola, gruppi ecc..)
+
+    - Strategia degli inviti (invitare con voto_AdE maggiore)
+    - strategia delle accettazioni e rifiuti
+    - chiusura dei gruppi quando manca poco
