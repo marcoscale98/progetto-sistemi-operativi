@@ -13,4 +13,10 @@ struct gruppo{
     int is_closed;  //0 se e' chiuso, 1 alrimenti
 }
 
+struct student{
+    int nof_elems;
+    int max_reject;
+    int nof_invites;
+};
+
 #endif
