@@ -1,7 +1,6 @@
 #ifndef _CONF_READER_H_
 #define _CONF_READER_H_
 
-#define POPSIZE 10
 #define MAX_VALUE 20
 #define TIME_LIMIT 120
 
