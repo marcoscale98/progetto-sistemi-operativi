@@ -6,6 +6,7 @@
 #include "header/conf_reader.h"
 
 // FUNZIONE opt_control: restituisce 0 se i dati di opt.conf sono corretti. -1 altrimenti
+// ATTENZIONE: si assume che la struttura sim_opt sia inizializzata con valori uguali a -1
 static int opt_control(struct sim_opt* options){
     int result = 1, correct = 1;
  
