@@ -6,12 +6,12 @@ struct info_student{
     int nof_elems;  //nof_elems dello studente
     int voto_AdE;   //voto_AdE dello studente
     int group;     //gruppo di cui lo studente fa parte
-}
+};
 
 struct gruppo{
     int members;  //numero di elementi del gruppo
     int is_closed;  //0 se e' chiuso, 1 alrimenti
-}
+};
 
 struct student{
     int nof_elems;
