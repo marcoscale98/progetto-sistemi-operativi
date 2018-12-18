@@ -1,10 +1,10 @@
-Gestore:
+Gestore: (Davide)
     - Sistemare semaforo
     - timer e segnali
     - gestione SIGALRM timer per fa stoppare gli student
     - gestione del voto e invio agli student
 
-Inviti:
+Inviti: (Mattia)
     - coda di messaggi (una sola)
     - tipo del messaggio: pid del destinatario
     - messaggio: invito
@@ -12,7 +12,7 @@ Inviti:
         - "accetto" ..
         - "rifiuto" ..
 
-Studente:
+Studente: (Marco)
     (memoria condivisa: voti, matricola, gruppi ecc..)
 
     - Strategia degli inviti (invitare con voto_AdE maggiore)
