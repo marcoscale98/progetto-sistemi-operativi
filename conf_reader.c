@@ -6,7 +6,6 @@
 #include "header/conf_reader.h"
 
 // FUNZIONE opt_control: restituisce 0 se i dati di opt.conf sono corretti. -1 altrimenti
-// ATTENZIONE: si assume che la struttura sim_opt sia inizializzata con valori uguali a -1
 static int opt_control(struct sim_opt* options){
     int result = 1, correct = 1;
  
@@ -28,7 +27,7 @@ static int opt_control(struct sim_opt* options){
     correct = options->sim_time>=0 && options->sim_time<=TIME_LIMIT;
     result &= correct;
     if(!correct)
-        printf("ERRORE: %s, %d. Il valore di 'max_reject' non e' corretto o mancante\n", __FILE__,__LINE__);
+        printf("ERRORE: %s, %d. Il valore di 'sim_time' non e' corretto o mancante\n", __FILE__,__LINE__);
     
     correct = options->nof_invites>=0 && options->nof_invites<=MAX_VALUE;
     result &= correct;
@@ -38,7 +37,7 @@ static int opt_control(struct sim_opt* options){
     correct = options->max_reject>=0 && options->max_reject<=MAX_VALUE;
     result &= correct;
     if(!correct)
-        printf("ERRORE: %s, %d. Il valore di 'sim_time' non e' corretto o mancante\n", __FILE__,__LINE__);
+        printf("ERRORE: %s, %d. Il valore di 'max_reject' non e' corretto o mancante\n", __FILE__,__LINE__);
     
     correct = (options->prob_2 + options->prob_3 + options->prob_4) == 100;
     result &= correct;
@@ -81,7 +80,7 @@ int init_options(struct sim_opt* options){
     TEST_ERROR;
 
     //CONTROLLO SULLA CORRETTEZZA DEI DATI
-    if(opt_control(options))
+    if(!opt_control(options))
         return -1;
     else
 
@@ -98,7 +97,7 @@ int main(){
     struct sim_opt options;
     memset(&options,-1,sizeof(options));        //fondamentale che si inizializzi a -1
     if(init_options(&options)==-1)
-        printf("Errore\n");
+        printf("Errore nell'inizializzazione!\n");
     else
         printf("sim_time: %d\nmax_reject: %d\nnof_invites: %d\nprob_2: %d\nprob_3: %d\nprob_4: %d\n",
                 options.sim_time, options.max_reject, options.nof_invites, options.prob_2, options.prob_3, options.prob_4);
