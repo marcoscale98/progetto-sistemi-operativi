@@ -3,43 +3,104 @@
 #include <string.h>
 #include <unistd.h>
 #include "header/error.h"
-#define POPSIZE 10
+#include "header/conf_reader.h"
 
-void init_student(char*,struct student*);
+// FUNZIONE opt_control: restituisce 0 se i dati di opt.conf sono corretti. -1 altrimenti
+static int opt_control(struct sim_opt* options){
+    int result = 1, correct = 1;
+ 
+    correct = options->prob_2>=0 && options->prob_2<=100;
+    result &= correct;
+    if(!correct)
+        printf("ERRORE: %s, %d. Il valore di 'prob_2' non e' corretto o mancante\n", __FILE__,__LINE__);
+    
+    correct = options->prob_3>=0 && options->prob_3<=100;
+    result &= correct;
+    if(!correct)
+        printf("ERRORE: %s, %d. Il valore di 'prob_3' non e' corretto o mancante\n", __FILE__,__LINE__);
+    
+    correct = options->prob_4>=0 && options->prob_4<=100;
+    result &= correct;
+    if(!correct)
+        printf("ERRORE: %s, %d. Il valore di 'prob_4' non e' corretto o mancante\n", __FILE__,__LINE__);
+    
+    correct = options->sim_time>=0 && options->sim_time<=TIME_LIMIT;
+    result &= correct;
+    if(!correct)
+        printf("ERRORE: %s, %d. Il valore di 'max_reject' non e' corretto o mancante\n", __FILE__,__LINE__);
+    
+    correct = options->nof_invites>=0 && options->nof_invites<=MAX_VALUE;
+    result &= correct;
+    if(!correct)
+        printf("ERRORE: %s, %d. Il valore di 'nof_invites' non e' corretto o mancante\n", __FILE__,__LINE__);
+    
+    correct = options->max_reject>=0 && options->max_reject<=MAX_VALUE;
+    result &= correct;
+    if(!correct)
+        printf("ERRORE: %s, %d. Il valore di 'sim_time' non e' corretto o mancante\n", __FILE__,__LINE__);
+    
+    correct = (options->prob_2 + options->prob_3 + options->prob_4) == 100;
+    result &= correct;
+    if(!correct)
+        printf("ERRORE: %s, %d. I valori di 'prob_2' 'prob_3' 'prob_4' inseriti non hanno somma uguale a 100\n", __FILE__,__LINE__);
 
-/*int main(){
-    struct student stud;
-    init_student("opt.conf",&stud);
-    printf("nof_elems: %d\nmax_reject: %d\nnof_invites: %d\n",stud.nof_elems, stud.max_reject, stud.nof_invites);
-}*/
+    return result;
+}
 
-void init_student(char* path, struct student* stud){
-    FILE* fs = fopen(path, "r");
-    char key[10];
-    int value;
-    float prob_2, prob_3, prob_4;
+// FUNZIONE init_options:   legge i dati in 'path' e li memorizza nella struttura 'options'
+//
+// VALORE DI RITORNO:
+//   0 - se in 'path' sono presenti tutti i dati richiesti e con valori conformi
+//  -1 - altrimenti
+int init_options(struct sim_opt* options){
+    FILE *fs = fopen("opt.conf", "r");
+    TEST_ERROR;
 
-    //legge chiavi e valori
+    char key[20];   //memorizza la stringa di chiave
+    int value;      //memorizza il valore
+
+    //CICLO DI LETTURA
+    //lettura chiavi e valori e controllo sulla conformita' dei dati presenti in path
     while(fscanf(fs,"%s %d",key,&value)!=EOF){
         if(!strcmp(key,"max_reject"))
-            stud->max_reject = value;
+            options->max_reject = value;
         else if(!strcmp(key,"nof_invites"))
-            stud->nof_invites = value;
+            options->nof_invites = value;
+        else if(!strcmp(key,"sim_time"))
+            options->sim_time = value;
         else if(!strcmp(key,"prob_2"))
-            prob_2 = value/100.0;
+            options->prob_2 = value;
         else if(!strcmp(key,"prob_3"))
-            prob_3 = value/100.0;
+            options->prob_3 = value;
         else if(!strcmp(key,"prob_4"))
-            prob_4 = value/100.0;
+            options->prob_4 = value;
     }
-    //inizializzazione nof_elems
-    srand(getpid());
-    int val = rand()%POPSIZE;
-    if(val<POPSIZE*prob_2)
-        stud->nof_elems = 2;
-    else if(val>=POPSIZE*prob_2 && val<POPSIZE*(prob_2+prob_3))
-        stud->nof_elems = 3;
-    else //if(val>=POPSIZE*(prob_2+prob_3) && val<POPSIZE)
-        stud->nof_elems = 4;
+    //EOF. Chiusura del file stream
     fclose(fs);
+    TEST_ERROR;
+
+    //CONTROLLO SULLA CORRETTEZZA DEI DATI
+    if(opt_control(options))
+        return -1;
+    else
+
+    //giunti a questo punto del programma, tutti i controlli sono stati passati e 'options' contiene tutti i dati desiderati
+    //la funzione in questo punto ritorna 0 che indica la corretta acquisizione dei dati di 'path'
+        return 0;
 }
+
+/*
+
+PER EVENTUALI TEST
+
+int main(){
+    struct sim_opt options;
+    memset(&options,-1,sizeof(options));        //fondamentale che si inizializzi a -1
+    if(init_options(&options)==-1)
+        printf("Errore\n");
+    else
+        printf("sim_time: %d\nmax_reject: %d\nnof_invites: %d\nprob_2: %d\nprob_3: %d\nprob_4: %d\n",
+                options.sim_time, options.max_reject, options.nof_invites, options.prob_2, options.prob_3, options.prob_4);
+}
+
+*/
