@@ -18,3 +18,6 @@ Studente: (Marco)
     - Strategia degli inviti (invitare con voto_AdE maggiore)
     - strategia delle accettazioni e rifiuti
     - chiusura dei gruppi quando manca poco
+    
+Makefile:
+    - crearlo per agevolare la compilazione e l'esecuzione
