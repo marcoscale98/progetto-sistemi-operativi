@@ -22,7 +22,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     }
     
     //definizione e inizializzazione variabili studente    
-    struct info_student *stud;
+    struct info_student *info_stud;
     float prob_2= atof(argv[2]),
         prob_3= atof(argv[3]);
     int nof_invites = atoi(argv[4]),
@@ -30,19 +30,19 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     	POPSIZE = atoi(argv[6]),
     	shmid = atoi(argv[7]);
     
-    stud->matricola = atoi(argv[1]);
-    stud->group = NOGROUP; //non ancora in un gruppo
+    info_stud->matricola = atoi(argv[1]);
+    info_stud->group = NOGROUP; //non ancora in un gruppo
     //l'indice dei gruppi parte dall'1
 
     //inizializzazione nof_elems
     srand(getpid());
     int val = rand()%POPSIZE;
     if(val<POPSIZE*prob_2)
-        stud->nof_elems = 2;
+        info_stud->nof_elems = 2;
     else if(val>=POPSIZE*prob_2 && val<POPSIZE*(prob_2+prob_3))
-        stud->nof_elems = 3;
+        info_stud->nof_elems = 3;
     else //if(val>=POPSIZE*(prob_2+prob_3) && val<POPSIZE)
-        stud->nof_elems = 4;
+        info_stud->nof_elems = 4;
 
     if((msgget(ftok("opt.conf",0), SIRUSR | S_IWUSR)!-1); //utizzare ftok()
     	errExit("msgget")
@@ -131,5 +131,5 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 }
 
 
-//last.invite 0 or 1 
-//poi leggo i messaggi se pid_accettatore o rifiutatore !=last.invite
+//last.invite 
+//poi leggo i messaggi se pid_acettatore o rifiutatore !=last.invite
