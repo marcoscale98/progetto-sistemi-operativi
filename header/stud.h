@@ -15,6 +15,11 @@ struct info_group{
     int max_voto;   //voto massimo del gruppo
 };
 
-// struct info_group gruppo[POP_SIZE];
+//struttura che andrà in MEMORIA CONDIVISA
+struct classroom { 
+    struct info_student students[POPSIZE];
+    struct info_group groups[POPSIZE];
+};
+
 
 #endif
