@@ -1,6 +1,8 @@
 #ifndef _STUD_H_
 #define _STUD_H_
 
+#define NOGROUP 0
+
 struct info_student{
     int matricola;  //matricola dello studente associato alla struttura
     int nof_elems;  //nof_elems dello studente
