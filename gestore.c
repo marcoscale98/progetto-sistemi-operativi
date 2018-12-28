@@ -126,10 +126,10 @@ int main(){                 //codice del gestore
     print_data(SO,POP_SIZE);
 
     //rimozione ipc
-    semctl(sem_id,0,IPC_RMID);
+    semctl(sem_id, IPC_RMID, NULL);
     TEST_ERROR;
-    shmctl(shm_id,0,IPC_RMID);
+    shmctl(shm_id, IPC_RMID, NULL);
     TEST_ERROR;
-    msgctl(msg_id,0,IPC_RMID);
+    msgctl(msg_id, IPC_RMID, NULL);
     TEST_ERROR;
 } 
