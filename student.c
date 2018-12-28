@@ -8,6 +8,7 @@
 #include "header/error.h"
 #include "header/sem_util.h"
 #include <sys/shm.h>
+#include <sem_util.c>
 
 #define MSG_LEN 100
 
@@ -15,6 +16,7 @@ struct msgbuf{
     int mtype;             /* message type, sarà > 0 */
     char testo[MSG_LEN];    /* message testo */
 };
+
 
 int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]=prob_2, argv[3]=prob_3, argv[4]=nof_invites, argv[5]=max_reject, argv[6]=POPSIZE , shmid = argv[7])
     
@@ -82,7 +84,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     
 /* boolean esco = false;
  * 
- * while(segnale 20% residuo tempo || esco) {
+ * while(time_left <= (0.5s*popsize) || esco) {
  *     semaforo reserve
  *     int accetto = controllo_inviti();
  *     if(accetto)
@@ -93,7 +95,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
  * } 
  * 
  * //cerco di chiudere tutti i gruppi
- * while(segnale di fine gara || esco) {
+ * while(time_left==0 || esco) {
  *     semaforo reserve
  *     chiudo il gruppo
  *     semaforo release
