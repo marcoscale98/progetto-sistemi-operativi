@@ -20,10 +20,25 @@ struct msgbuf{
 
 int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]=prob_2, argv[3]=prob_3, argv[4]=nof_invites, argv[5]=max_reject, argv[6]=POPSIZE , shmid = argv[7])
     
+    //set degli handler
+    sa_sigint();
+    TEST_ERROR;
+    sa_sigalrm();
+    TEST_ERROR;
+
     if(argc!=8){
         printf("Numero di argomenti inseriti non corretto\n");
         exit(EXIT_FAILURE);
     }
+    
+    //INIZIALIZZAZIONE IPC
+    int sem_id, shm_id, msg_id;
+    sem_id = semget(IPC_KEY, N_SEM, 0666);
+    TEST_ERROR;
+    msg_id = semget(IPC_KEY, 0666);
+    TEST_ERROR;
+    shm_id = semget(IPC_KEY,SHM_SIZE, 0666);
+    TEST_ERROR;
     
     //INIZIALIZZAZIONE VARIABILI STUDENTE    
     struct info_student student;
@@ -56,12 +71,12 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     //INIZIALIZZAZIONE VARIABILI MIO GRUPPO (per ora ci sono solo io)
     struct info_group my_group;
     my_group.n_members=1;
-    my_group.is_closed=0;
+    my_group.is_closed=FALSE;
     my_group.pref_nof_elems=student.nof_elems;
     my_group.max_voto=student.voto_AdE;
     
     //INIZIALIZZAZIONE MEMORIA CONDIVISA
-    struct classroom *aula = (struct classroom *)shmat(shmid, NULL, 0666);
+    struct classroom *aula = (struct classroom *)shmat(shm_id, NULL, 0666);
     aula->students[matricola] = &student;
     aula->groups[matricola] = &my_group;
     //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
@@ -80,7 +95,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     printf(" shmid: %d\n", shmid);
     */
         
-    //segnale di partenza
+    reserve_sem(sem_id,SEM_READY);
     
 /* boolean esco = false;
  * 
