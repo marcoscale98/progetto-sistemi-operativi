@@ -8,11 +8,10 @@
 #include <sys/msg.h>
 #include "header/shm_util.h"
 #include "header/error.h"
-#include "header/sem_util.h"
 #include "header/config.h"
 #include "header/sig_util.h"
-#include "sem_util.c"
 #include "header/sem_util.h"
+#include "module/sem_util.c"
 
 #define DEBUG
 
@@ -73,8 +72,8 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     
     //INIZIALIZZAZIONE MEMORIA CONDIVISA
     struct info_sim *aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
-    aula->student[student.matricola] = &student;
-    aula->group[student.matricola] = &my_group;
+    aula->student[student.matricola] = student;
+    aula->group[student.matricola] = my_group;
     //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
     
 #ifdef DEBUG
@@ -89,7 +88,8 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 #endif
         
     reserve_sem(sem_id, SEM_READY);
-    
+    TEST_ERROR;
+}
 /* boolean esco = false;
  * 
  * while(time_left <= (0.5s*popsize) || esco) {
