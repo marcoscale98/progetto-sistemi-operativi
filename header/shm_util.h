@@ -2,7 +2,8 @@
 #define _SHM_UTIL_H_
 
 #define NOGROUP -1
-#define SHM_SIZE sizeof(struct classroom)
+#define SHM_SIZE sizeof(struct info_sim)
+
 
 struct info_student{
     int matricola;  //matricola dello studente associato alla struttura
