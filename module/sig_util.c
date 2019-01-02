@@ -2,7 +2,6 @@
 #include "../header/sem_util.h"
 #include "../header/sig_util.h"
 #include "../header/config.h"
-#include "../header/stud.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
