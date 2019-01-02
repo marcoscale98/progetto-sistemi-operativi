@@ -6,8 +6,7 @@
 
 //definizione visuale dei semafori ready, per la memoria condivisa di info_student e gruppo
 #define SEM_READY 0
-#define SEM_SHM_STUD 1
-#define SEM_SHM_GRUPPO 2
+#define SEM_SHM 1
 
 union semun {
     int val;                    // value for SETVAL
