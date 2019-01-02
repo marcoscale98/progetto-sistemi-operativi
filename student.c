@@ -4,21 +4,19 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
-#include "header/stud.h"
+#include <sys/shm.h>
+#include <sys/msg.h>
+#include "header/shm_util.h"
 #include "header/error.h"
 #include "header/sem_util.h"
-#include <sys/shm.h>
-#include <sem_util.c>
+#include "header/config.h"
+#include "header/sig_util.h"
+#include "sem_util.c"
+#include "header/sem_util.h"
 
-#define MSG_LEN 100
+#define DEBUG
 
-struct msgbuf{
-    int mtype;             /* message type, sarà > 0 */
-    char testo[MSG_LEN];    /* message testo */
-};
-
-
-int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]=prob_2, argv[3]=prob_3, argv[4]=nof_invites, argv[5]=max_reject, argv[6]=POPSIZE , shmid = argv[7])
+int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]=prob_2, argv[3]=prob_3, argv[4]=nof_invites, argv[5]=max_reject
     
     //set degli handler
     sa_sigint();
@@ -26,7 +24,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     sa_sigalrm();
     TEST_ERROR;
 
-    if(argc!=8){
+    if(argc!=6){
         printf("Numero di argomenti inseriti non corretto\n");
         exit(EXIT_FAILURE);
     }
@@ -35,18 +33,16 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     int sem_id, shm_id, msg_id;
     sem_id = semget(IPC_KEY, N_SEM, 0666);
     TEST_ERROR;
-    msg_id = semget(IPC_KEY, 0666);
+    msg_id = msgget(IPC_KEY, 0666);
     TEST_ERROR;
-    shm_id = semget(IPC_KEY,SHM_SIZE, 0666);
+    shm_id = shmget(IPC_KEY,SHM_SIZE, 0666);
     TEST_ERROR;
     
     //INIZIALIZZAZIONE VARIABILI STUDENTE    
     struct info_student student;
     float prob_2 = atoi(argv[2])/100.0,
           prob_3 = atoi(argv[3])/100.0;
-    int popsize = atoi(argv[6]),
-        shmid = atoi(argv[7]),
-        nof_invites = atoi(argv[4]),
+    int nof_invites = atoi(argv[4]),
         max_reject = atoi(argv[5]);
         
     student.matricola = atoi(argv[1]);
@@ -59,10 +55,10 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 
     //inizializzazione nof_elems
     srand(getpid());
-    int val = rand()%popsize;
-    if(val<popsize*prob_2)
+    int val = rand()%POP_SIZE;
+    if(val<POP_SIZE*prob_2)
         student.nof_elems = 2;
-    else if(val>=popsize*prob_2 && val<popsize*(prob_2+prob_3))
+    else if(val>=POP_SIZE*prob_2 && val<POP_SIZE*(prob_2+prob_3))
         student.nof_elems = 3;
     else //if(val>=popsize*(prob_2+prob_3) && val<popsize)
         student.nof_elems = 4;
@@ -76,26 +72,23 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     my_group.max_voto=student.voto_AdE;
     
     //INIZIALIZZAZIONE MEMORIA CONDIVISA
-    struct classroom *aula = (struct classroom *)shmat(shm_id, NULL, 0666);
-    aula->students[matricola] = &student;
-    aula->groups[matricola] = &my_group;
+    struct info_sim *aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
+    aula->student[student.matricola] = &student;
+    aula->group[student.matricola] = &my_group;
     //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
     
-    //TESTING
-    /*
+#ifdef DEBUG
     printf(" student.matricola: %d\n", student.matricola);
     printf(" prob_2: %f\n", prob_2);
     printf(" prob_3: %f\n", prob_3);
     printf(" nof_invites: %d\n", nof_invites);
     printf(" max_reject: %d\n", max_reject);
-    printf(" popsize: %d\n", popsize);
     printf(" student.group: %d\n", student.group);
     printf(" student.voto_AdE: %d\n", student.voto_AdE);
     printf(" student.nof_elems: %d\n", student.nof_elems);
-    printf(" shmid: %d\n", shmid);
-    */
+#endif
         
-    reserve_sem(sem_id,SEM_READY);
+    reserve_sem(sem_id, SEM_READY);
     
 /* boolean esco = false;
  * 
@@ -118,12 +111,12 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
  * 
  **/
     
-    
+/*    
     //STRATEGIA INIZIALE
     int i, counter_invites=0;
     struct info_student *stud2;
     
-    for(i=0; i<popsize; i++) {
+    for(i=0; i<POP_SIZE; i++) {
         stud2 = aula->students[i];
         
         //semaforo reserve
@@ -147,7 +140,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 
 //----------------------------------------------------------------------------------------
 
-
+/*
 
     if((msgget(ftok("opt.conf",0), SIRUSR | S_IWUSR)!-1); //utizzare ftok()
     	errExit("msgget")
@@ -238,3 +231,4 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 
 //last.invite 
 //poi leggo i messaggi se pid_acettatore o rifiutatore !=last.invite
+*/
