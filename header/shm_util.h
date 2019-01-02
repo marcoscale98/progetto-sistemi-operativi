@@ -4,6 +4,7 @@
 #define NOGROUP -1
 #define SHM_SIZE sizeof(struct info_sim)
 
+#include "config.h"
 
 struct info_student{
     int matricola;  //matricola dello studente associato alla struttura
