@@ -1,6 +1,6 @@
 #include <sys/types.h>
 #include <sys/sem.h>
-#include "header/sem_util.h"
+#include "../header/sem_util.h"
 
 // Inizializzazione del semaforo a valore inserito da utente
 int init_sem(int semid, int semnum, int semval) {

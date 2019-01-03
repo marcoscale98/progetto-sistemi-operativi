@@ -2,7 +2,7 @@ gestore: gestore.c sem_util.o conf_reader.o time_util.o sig_util.o student error
 	@gcc gestore.c sem_util.o conf_reader.o time_util.o sig_util.o -o gestore
 	@rm -f *.o
 	@echo Compilazione completata. Eseguire con ./gestore
-student: student.c sem_util.o shm_util.h error.h 
+student: student.c shm_util.h error.h config.h sig_util.h sem_util.o
 	@gcc student.c sem_util.o -o student
 sem_util.o: header/sem_util.h module/sem_util.c error.h
 	@gcc -c module/sem_util.c
