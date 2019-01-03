@@ -82,6 +82,54 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
         
     reserve_sem(sem_id, SEM_READY);
     TEST_ERROR;
+    
+    /* boolean esco = false;
+ * 
+ * while(time_left <= (0.5s*popsize) || esco) {
+ *     semaforo reserve
+ *     int accetto = controllo_inviti();
+ *     if(accetto)
+ *         esco=true;
+ *     else
+ *         mando_inviti();
+ *     semaforo release
+ * } 
+ * 
+ * //cerco di chiudere tutti i gruppi
+ * while(time_left==0 || esco) {
+ *     semaforo reserve
+ *     chiudo il gruppo
+ *     semaforo release
+ * }
+ * 
+ **/
+    
+/*    
+    //STRATEGIA INIZIALE
+    int i, counter_invites=0;
+    struct info_student *stud2;
+    
+    for(i=0; i<POP_SIZE; i++) {
+        stud2 = aula->students[i];
+        
+        //semaforo reserve
+        
+        //se sono dello stesso turno e non hanno un gruppo
+        if(stesso_turno(&stud2, &student) && stud2->group==NOGROUP) {
+            
+            //se hanno la stessa preferenza di nof_elems
+            if(stud2->nof_elems==student.nof_elems) {
+                
+                //se stud2.voto > mio.voto-3
+                if(stud2->voto_AdE > (student.voto_AdE-3)) {
+                    invita(stud2->matricola);
+                    counter_invites;
+                }
+            }
+        }
+        //semaforo release
+    }
+*/
 }
 
 
@@ -180,52 +228,6 @@ void setta_risposta(int *invitati,int mittente){
 
 
 
-/* boolean esco = false;
- * 
- * while(time_left <= (0.5s*popsize) || esco) {
- *     semaforo reserve
- *     int accetto = controllo_inviti();
- *     if(accetto)
- *         esco=true;
- *     else
- *         mando_inviti();
- *     semaforo release
- * } 
- * 
- * //cerco di chiudere tutti i gruppi
- * while(time_left==0 || esco) {
- *     semaforo reserve
- *     chiudo il gruppo
- *     semaforo release
- * }
- * 
- **/
-    
-/*    
-    //STRATEGIA INIZIALE
-    int i, counter_invites=0;
-    struct info_student *stud2;
-    
-    for(i=0; i<POP_SIZE; i++) {
-        stud2 = aula->students[i];
-        
-        //semaforo reserve
-        
-        //se sono dello stesso turno e non hanno un gruppo
-        if(stesso_turno(&stud2, &student) && stud2->group==NOGROUP) {
-            
-            //se hanno la stessa preferenza di nof_elems
-            if(stud2->nof_elems==student.nof_elems) {
-                
-                //se stud2.voto > mio.voto-3
-                if(stud2->voto_AdE > (student.voto_AdE-3)) {
-                    invita(stud2->matricola);
-                    counter_invites;
-                }
-            }
-        }
-        //semaforo release
-    }
 
 
 //----------------------------------------------------------------------------------------
@@ -248,77 +250,4 @@ void setta_risposta(int *invitati,int mittente){
   		}
   	}
   	
-	
-	void invito_processo(){
-
-		char matricola[50] = argv[1];
-		struct msgbuf invito;
-
-		invito.mytype = //processo da invitare
-		invito.testo = "Vuoi_Paratecipare_al_Gruppo? : ";
-
-		strcat(invito.testo,matricola);
-
-		if(msgsnd(id, &invito, MSG_LEN, 0)<0) {
-    			fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
-    			exit(EXIT_FAILURE);
-    	}
-
-    	TEST_ERROR
-    	printf("Invito Spedito")
-
-	}
-
-	void rifiuta_invito(){
-
-		struct msgbuf messaggio;
-		int n_rifiuti=0;
-		int pid_invitatore;
-
-		while(msgrcv(id,&invito,MSGLEN,stud->matricola,IPC_NOWAIT)!=1){
-			if(n_rifiuti<=max_reject){
-				sscanf(invito.text,"%s : %d", messaggio_invito[50] , &pid_invitatore)
-				messaggio.type= pid_invitatore;
-				messaggio.testo="Rifiuto : "
-				strcat(accetta_invito.testo, arg[1]); //matricola di chi accetta
-				if(msgsnd(id, &accetta_invito, MSG_LEN, 0)<0) {
-    				fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
-    				exit(EXIT_FAILURE);
-    			}
-    			TEST_ERROR
-    			printf("Invito Spedito");
-				n_rifiuti ++;
-			}else{
-				accetta_invito()
-			}
-		}
-	}
-
-	void accetta_invito(){
-
-		int pid_invitatore;
-		char messaggio_invito[50];
-		char accetta_messaggio[50];
-		struct msgbuf accetta_invito
-
-		while(msgrcv(id,&invito,MSGLEN,stud->matricola,IPC_NOWAIT)!=-1){
-			sscanf(invito.text,"%s : %d", messaggio_invito[50] , &pid_invitatore)
-			accetta_invito.type= pid_invitatore;
-			accetta_invito.testo="Accetto : "
-			strcat(accetta_invito.testo, arg[1]); //matricola di chi accetta
-			if(msgsnd(id, &accetta_invito, MSG_LEN, 0)<0) {
-    			fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
-    			exit(EXIT_FAILURE);
-    		}
-    		else
-    			printf("Invito Spedito");
-		}
-		invita_processo();
-	}    
-    return 0;          
-}
-
-
-//last.invite 
-//poi leggo i messaggi se pid_acettatore o rifiutatore !=last.invite
 */
