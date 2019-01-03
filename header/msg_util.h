@@ -1,6 +1,11 @@
+#ifndef _MSG_UTIL_H_
+#define _MSG_UTIL_H_
+
 #define MSG_LEN 100
 
 struct msgbuf{
    int mtype;             /* message type, sarà > 0 */
-   char testo[MSG_LEN];    /* message testo */
+   char text[MSG_LEN];    /* message testo */
 };
+
+#endif
