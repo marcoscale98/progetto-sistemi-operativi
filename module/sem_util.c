@@ -1,6 +1,18 @@
 #include <sys/types.h>
 #include <sys/sem.h>
 #include "../header/sem_util.h"
+#include "../header/error.h"
+
+// Ritorna il valore del semaforo (consideando anche valori negativi)
+int get_sem_val(int semid, int semnum) {
+    union semun arg;
+    int semncnt = semctl(semid, semnum, GETNCNT, arg);
+    TEST_ERROR;
+    if(semncnt > 0)
+        return -semncnt;
+    else
+        return semctl(semid, semnum, GETVAL, arg);
+}
 
 // Inizializzazione del semaforo a valore inserito da utente
 int init_sem(int semid, int semnum, int semval) {

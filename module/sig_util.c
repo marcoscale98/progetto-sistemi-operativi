@@ -1,12 +1,19 @@
 #include "../header/error.h"
 #include "../header/sem_util.h"
 #include "../header/sig_util.h"
+#include "../header/shm_util.h"
 #include "../header/config.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/signal.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+#include <sys/msg.h>
+#include <sys/shm.h>
+
 
 //handler per SIGINT: rimuove le strutture ipc e poi uccide il process group
 void handler_sigint(int sig){
@@ -21,11 +28,11 @@ void handler_sigint(int sig){
     TEST_ERROR;
     
     //rimozione ipc
-    semctl(sem_id,IPC_RMID, NULL);
+    semctl(sem_id,IPC_RMID, 0);
     TEST_ERROR;
-    shmctl(shm_id,IPC_RMID, NULL);
+    shmctl(shm_id,IPC_RMID, 0);
     TEST_ERROR;
-    msgctl(msg_id,IPC_RMID, NULL);
+    msgctl(msg_id,IPC_RMID, 0);
     TEST_ERROR;
     
     //uccisione processi

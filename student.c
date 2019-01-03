@@ -11,17 +11,10 @@
 #include "header/config.h"
 #include "header/sig_util.h"
 #include "header/sem_util.h"
-#include "module/sem_util.c"
 
 #define DEBUG
 
 int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]=prob_2, argv[3]=prob_3, argv[4]=nof_invites, argv[5]=max_reject
-    
-    //set degli handler
-    sa_sigint();
-    TEST_ERROR;
-    sa_sigalrm();
-    TEST_ERROR;
 
     if(argc!=6){
         printf("Numero di argomenti inseriti non corretto\n");
