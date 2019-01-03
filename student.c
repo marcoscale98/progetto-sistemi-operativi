@@ -11,7 +11,6 @@
 #include "header/config.h"
 #include "header/sig_util.h"
 #include "header/sem_util.h"
-#include "module/sem_util.c"
 
 #define DEBUG
 

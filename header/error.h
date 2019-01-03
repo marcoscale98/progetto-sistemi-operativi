@@ -3,8 +3,9 @@
 
 #include <errno.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #define TEST_ERROR    if (errno) {fprintf(stderr, \
                        "%s:%d: PID=%5d: Error %d (%s)\n",\

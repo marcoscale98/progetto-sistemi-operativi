@@ -3,13 +3,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+#include <sys/msg.h>
+#include <sys/shm.h>
 #include "header/error.h"
 #include "header/conf_reader.h"
 #include "header/sem_util.h"
+#include "header/msg_util.h"
 #include "header/sig_util.h"
+#include "header/shm_util.h"
 #include "header/time_util.h"
 #include "header/config.h"
-#include "header/stud.h"
 
 //stampa per ogni voto il numero di studenti che ha tale voto
 void print_data(int array[], int size){
@@ -77,7 +83,7 @@ int main(){                 //codice del gestore
     int sem_id, shm_id, msg_id;
     sem_id = semget(IPC_KEY,N_SEM,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
-    msg_id = semget(IPC_KEY,IPC_CREAT|IPC_EXCL|0666);
+    msg_id = semget(IPC_KEY,2,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
     shm_id = semget(IPC_KEY,SHM_SIZE,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
@@ -88,7 +94,7 @@ int main(){                 //codice del gestore
     TEST_ERROR;
 
     //inizializzazione del semaforo di scrittura
-    init_sem_in_use(sem_id,SEM_WR);
+    init_sem_in_use(sem_id,SEM_SHM);
     TEST_ERROR;
     //semaforo SEM_READY inizializzato a 0
     init_sem_in_use(sem_id,SEM_READY);
@@ -101,12 +107,12 @@ int main(){                 //codice del gestore
     //set del timer e inizio simulazione
     set_timer(options.sim_time);
     printf("Gestore (PID: %d). Inizio simulazione\n",getpid());
-    while(timer>0){
-        int timer = time_left();
+    int timer;
+    while((timer = time_left())>0){
         if(timer%5 == 0){       //aggiornamento del tempo rimanente ogni 5 secondi
-            reserve_sem(sem_id,SEM_WR);
+            reserve_sem(sem_id,SEM_SHM);
             shared->time_left = timer;
-            release_sem(sem_id,SEM_WR);
+            release_sem(sem_id,SEM_SHM);
         }
     } //allo scattare del timer verrà invocato l'handler
 
@@ -126,7 +132,7 @@ int main(){                 //codice del gestore
             voto_SO-=3;
 
         //aggiornamento dei dati
-        AdE[i]=stud.voto_Ade;
+        AdE[i]=stud.voto_AdE;
         SO[i]=voto_SO;
 
         //invio del messaggio allo studente con il suo voto
@@ -144,10 +150,10 @@ int main(){                 //codice del gestore
     print_data(SO,POP_SIZE);
 
     //rimozione ipc
-    semctl(sem_id, IPC_RMID, NULL);
+    semctl(sem_id, IPC_RMID, 0);
     TEST_ERROR;
-    shmctl(shm_id, IPC_RMID, NULL);
+    shmctl(shm_id, IPC_RMID, 0);
     TEST_ERROR;
-    msgctl(msg_id, IPC_RMID, NULL);
+    msgctl(msg_id, IPC_RMID, 0);
     TEST_ERROR;
 } 

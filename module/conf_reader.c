@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "header/error.h"
-#include "header/conf_reader.h"
+#include "../header/error.h"
+#include "../header/conf_reader.h"
 
 // FUNZIONE opt_control: restituisce 0 se i dati di opt.conf sono corretti. -1 altrimenti
 static int opt_control(struct sim_opt* options){
