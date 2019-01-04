@@ -15,3 +15,5 @@ time_util.o: header/time_util.h module/time_util.c header/error.h header/config.
 	@gcc -c module/time_util.c
 clean:
 	@rm gestore student
+clean.o:
+	@rm -f *.o
