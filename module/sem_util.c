@@ -3,7 +3,7 @@
 #include "../header/sem_util.h"
 #include "../header/error.h"
 
-// Ritorna il valore del semaforo (consideando anche valori negativi)
+// Ritorna il valore del semaforo (considerando anche valori negativi)
 int get_sem_val(int semid, int semnum) {
     union semun arg;
     int semncnt = semctl(semid, semnum, GETNCNT, arg);
