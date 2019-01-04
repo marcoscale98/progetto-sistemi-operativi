@@ -3,7 +3,7 @@ gestore: gestore.c sem_util.o conf_reader.o time_util.o sig_util.o student heade
 	@rm -f *.o
 	@echo Compilazione completata. Eseguire con ./gestore
 	@echo Pulire con il comando: make clean
-student: student.c sem_util.o header/msg_util.h header/shm_util.h header/error.h header/config.h
+student: student.c sem_util.o header/msg_util.h header/shm_util.h header/error.h header/config.h header/msg_util.h
 	@gcc student.c sem_util.o -o student
 sem_util.o: header/sem_util.h module/sem_util.c header/error.h header/config.h
 	@gcc -c module/sem_util.c
