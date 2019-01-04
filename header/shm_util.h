@@ -24,7 +24,7 @@ struct info_group{
 //struttura che andrà in MEMORIA CONDIVISA
 struct info_sim { 
     struct info_student student[POP_SIZE];
-    struct info_group group[POP_SIZE];
+    struct info_group *group[POP_SIZE]; //puntatore NULL quando il gruppo non esiste più
     int time_left;
 };
 
