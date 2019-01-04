@@ -11,6 +11,8 @@
 #include "header/config.h"
 #include "header/sig_util.h"
 #include "header/sem_util.h"
+#include "header/msg_util.h"
+
 
 #define DEBUG
 
@@ -133,9 +135,10 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 }
 
 
-void invita_processo(int *invitati, int mittente, int destinatario, int msg_id, int i){
+void invita_processo(int *invitati, int mittente, int destinatario, int msg_id){
     struct msgbuf invito;
-
+    static int = 0;
+    
     invito.mytype = (long)destinatario;
     invito.text = "Invito : ";
 
@@ -209,7 +212,7 @@ int controlla_risposta(int *invitati){
     int return_value = TRUE;
     int i;
     for(i=0;i<ARRAY_LEN;i++){
-        if(invitati[i]==-1){
+        if(invitati[i]!=-1){
             return_value = FALSE;
             break;
         }
