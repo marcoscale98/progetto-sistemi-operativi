@@ -12,9 +12,16 @@
 #include "header/sig_util.h"
 #include "header/sem_util.h"
 #include "header/msg_util.h"
+#define ARRAY_LEN 50
 
 
 #define DEBUG
+
+void accetta_invito(int mittente , int destinatario , int msg_id);
+void rifiuta_invito(int mittente, int msg_id, int n_rifiuti,int max_reject);
+void accetta_invito(int mittente , int destinatario , int msg_id);
+int controlla_risposta(int *invitati);
+void setta_risposta(int *invitati,int mittente);
 
 int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]=prob_2, argv[3]=prob_3, argv[4]=nof_invites, argv[5]=max_reject
 
@@ -140,7 +147,7 @@ void invita_processo(int *invitati, int mittente, int destinatario, int msg_id){
     static int = 0;
     
     invito.mytype = (long)destinatario;
-    invito.text = "Invito : ";
+    sprintf(invito.text,"Invito :");
 
     char buf[8];
     sprintf(buf,"%d",mittente);
@@ -164,13 +171,13 @@ void rifiuta_invito(int mittente, int msg_id, int n_rifiuti,int max_reject){
     char buf[8];
     sprintf(buf,"%d",mittente);
 
-    while(msgrcv(msg_id,&invito,MSGLEN,mittente,IPC_NOWAIT)!=1){
+    while(msgrcv(msg_id,&invito,MSG_LEN,mittente,IPC_NOWAIT)!=1){
         if(n_rifiuti<=max_reject){
-            sscanf(invito.text,"%s : %d", messaggio, &destinatario)
+            sscanf(invito.text,"%s : %d", messaggio, &destinatario);
             invito.type=(long)destinatario;
-            invito.text="Rifiuto : "
+            sprintf(invito.text,"Rifiuto :");
             strcat(invito.text, buf); //matricola di chi accetta
-            if(msgsnd(id, &messaggio, MSG_LEN, 0)<0) {
+            if(msgsnd(msg_id, &messaggio, MSG_LEN, 0)<0) {
                 fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
                 exit(EXIT_FAILURE);
             }
@@ -178,25 +185,24 @@ void rifiuta_invito(int mittente, int msg_id, int n_rifiuti,int max_reject){
             printf("Invito Spedito");
             n_rifiuti ++;
         }else{
-            accetta_invito()
+           // accetta_invito();
         }
     }
 }
 
 void accetta_invito(int mittente , int destinatario , int msg_id){
 
-    int destinatario;
     char messaggio[50];
     struct msgbuf invito;
 
     char buf[8];
     sprintf(buf,"%d",mittente);
-    strcat(invito.text,buf)
+    strcat(invito.text,buf);
 
-    while(msgrcv(id,&invito,MSGLEN,stud->matricola,IPC_NOWAIT)!=-1){
-        sscanf(invito.text,"%s : %d", messaggio,&destinatario)
+    while(msgrcv(msg_id,&invito,MSG_LEN,stud->matricola,IPC_NOWAIT)!=-1){
+        sscanf(invito.text,"%s : %d", messaggio,&destinatario);
         invito.type=(long)destinatario;
-        invito.text="Accetto : "
+        sprintf(invito.text,"Accetto :");
         strcat(accetta_invito.testo,buf); //buf = matricola di chi accetta
         if(msgsnd(id, &accetta_invito, MSG_LEN, 0)<0) {
             fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
