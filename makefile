@@ -1,8 +1,10 @@
 gestore: gestore.c sem_util.o conf_reader.o time_util.o sig_util.o student header/msg_util.h header/shm_util.h header/error.h header/config.h
 	@gcc gestore.c sem_util.o conf_reader.o time_util.o sig_util.o -o gestore
 	@rm -f *.o
-	@echo Compilazione completata. Eseguire con ./gestore
-	@echo Pulire con il comando: make clean
+	@echo Compilazione completata.
+	@echo ./gestore:	esegui la simulazione
+	@echo make clean:	elimina i file eseguibili gestore e studente
+	@echo make clean.o:	elimina i file oggetto *.o
 student: student.c sem_util.o header/msg_util.h header/shm_util.h header/error.h header/config.h header/msg_util.h
 	@gcc student.c sem_util.o -o student
 sem_util.o: header/sem_util.h module/sem_util.c header/error.h header/config.h
