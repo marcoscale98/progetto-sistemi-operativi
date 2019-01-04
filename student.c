@@ -12,7 +12,7 @@
 #include "header/sig_util.h"
 #include "header/sem_util.h"
 #include "header/msg_util.h"
-
+#include "module/msg_util.c"
 
 #define DEBUG
 
@@ -72,39 +72,37 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
     
 #ifdef DEBUG
-    printf(" student.matricola: %d\n", student.matricola);
-    printf(" prob_2: %f\n", prob_2);
-    printf(" prob_3: %f\n", prob_3);
-    printf(" nof_invites: %d\n", nof_invites);
-    printf(" max_reject: %d\n", max_reject);
-    printf(" student.group: %d\n", student.group);
-    printf(" student.voto_AdE: %d\n", student.voto_AdE);
-    printf(" student.nof_elems: %d\n", student.nof_elems);
+    printf("PID: %d\nstudent.matricola: %d\n", getpid(),student.matricola);
+    printf("prob_2: %f\n", prob_2);
+    printf("prob_3: %f\n", prob_3);
+    printf("nof_invites: %d\n", nof_invites);
+    printf("max_reject: %d\n", max_reject);
+    printf("student.group: %d\n", student.group);
+    printf("student.voto_AdE: %d\n", student.voto_AdE);
+    printf("student.nof_elems: %d\n", student.nof_elems);
 #endif
         
     reserve_sem(sem_id, SEM_READY);
     TEST_ERROR;
     
-    /* boolean esco = false;
- * 
- * while(time_left <= (0.5s*popsize) || esco) {
- *     semaforo reserve
- *     int accetto = controllo_inviti();
- *     if(accetto)
- *         esco=true;
- *     else
- *         mando_inviti();
- *     semaforo release
- * } 
- * 
- * //cerco di chiudere tutti i gruppi
- * while(time_left==0 || esco) {
- *     semaforo reserve
- *     chiudo il gruppo
- *     semaforo release
- * }
- * 
- **/
+    int esco = FALSE;
+
+    while(aula->time_left <= (0.5s*POP_SIZE) || esco) {
+        reserve_sem(sem_id, SEM_SHM);
+        int accetto = controllo_inviti();
+        if(accetto)
+           esco=true;
+        else
+            mando_inviti();
+        release_sem(sem_id, SEM_SHM);
+    } 
+ 
+    //cerco di chiudere tutti i gruppi
+    while(time_left==0 || esco) {
+        reserve_sem(sem_id, SEM_SHM);
+        chiudo_gruppo()
+        release_sem(sem_id, SEM_SHM);
+    }
     
 /*    
     //STRATEGIA INIZIALE
@@ -137,7 +135,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 
 void invita_processo(int *invitati, int mittente, int destinatario, int msg_id){
     struct msgbuf invito;
-    static int = 0;
+    static int i = 0;
     
     invito.mytype = (long)destinatario;
     invito.text = "Invito : ";
@@ -207,7 +205,7 @@ void accetta_invito(int mittente , int destinatario , int msg_id){
     }
 } 
 
-//conttrolla che tutti gli invitati abbiano risposto agli inviti
+//controlla che tutti gli invitati abbiano risposto agli inviti
 int controlla_risposta(int *invitati){
     int return_value = TRUE;
     int i;
@@ -230,27 +228,3 @@ void setta_risposta(int *invitati,int mittente){
 }
 
 
-
-
-
-//----------------------------------------------------------------------------------------
-
-/*
-
-    if((msgget(ftok("opt.conf",0), SIRUSR | S_IWUSR)!-1); //utizzare ftok()
-    	errExit("msgget")
-
-    int counter_invites = 0;
-
-    while(counter_invites < nof_invites & stud->group < stud->nof_elems){
-    	if((msgrcv(id,&invito,MSGLEN,getpid(),IPC_NOWAIT)){
-    		//se ci sono messaggi deve rispondere prima 
-    	else if(info_student.group>-1){
-    		rifiuta_invito();
-    	else(){
-    		invito_processo()
-  			counter_invites ++;
-  		}
-  	}
-  	
-*/
