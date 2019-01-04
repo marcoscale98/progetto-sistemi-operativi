@@ -4,7 +4,7 @@
 #define MSG_LEN 100
 
 struct msgbuf{
-   int mytype;             /* message type, sarà > 0 */
+   int mtype;             /* message type, sarà > 0 */
    char text[MSG_LEN];    /* message testo */
 };
 
