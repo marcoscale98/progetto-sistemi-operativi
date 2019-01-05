@@ -14,11 +14,12 @@
 #include "header/msg_util.h"
 #include "module/msg_util.c"
 
-#define ARRAY_LEN
+#define ARRAY_LEN 10
 #define DEBUG
 
-extern struct info_student *student;
-extern struct info_group *my_group;
+struct info_student *student;
+struct info_group *my_group;
+struct info_sim *aula;
 
 int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]=prob_2, argv[3]=prob_3, argv[4]=nof_invites, argv[5]=max_reject
 
@@ -39,7 +40,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     int matricola = atoi(argv[1]);
     
     //INIZIALIZZAZIONE MEMORIA CONDIVISA
-    struct info_sim *aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
+    aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
     student = &(aula->student[matricola]);
     my_group = aula->my_group[matricola];   
     //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
@@ -100,69 +101,42 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     
     int accettato_invito = FALSE;
     int invitati[ARRAY_LEN];
+    int n_invitati=0;
+    int n_rifiutati=0;
     for(int j=0; j<ARRAY_LEN; j++)
         invitati[j]=-1;
     
-    while(aula->time_left <= (0.5*POP_SIZE) || accettato_invito) {
+    
+    //STRATEGIA INIZIALE
+    while(aula->time_left >= (0.5*POP_SIZE) && !accettato_invito && !(my_group->is_closed)) {
         reserve_sem(sem_id, SEM_SHM);
  
-	if (controllo_risposte(invitati, aula)) {//se tutti hanno risposto
-	    accettato_invito = controllo_inviti(); //se leader true rifiuta gli inviti
+	if (controllo_risposte(msg_id, invitati)) {//se tutti hanno risposto
+	    accettato_invito = controllo_inviti(msg_id); //se leader true rifiuta gli inviti
 	    //se accetto true, esco
-	    if (!accettato_invito)
-		mando_inviti();
+	    if (!accettato_invito && !chiudo_gruppo()) {
+		mando_inviti(msg_id);
+	    }
 	}
 	
 	release_sem(sem_id, SEM_SHM);
     } 
  
-    //cerco di chiudere tutti i gruppi
-    while(aula->time_left==0 || accettato_invito) {
-        reserve_sem(sem_id, SEM_SHM);
-        chiudo_gruppo()
-        release_sem(sem_id, SEM_SHM);
-    }
     
-/*    
-    //STRATEGIA INIZIALE
-    int i, counter_invites=0;
-    struct info_student *stud2;
-    
-    for(i=0; i<POP_SIZE; i++) {
-        stud2 = aula->students[i];
-        
-        //semaforo reserve
-        
-        //se sono dello stesso turno e non hanno un gruppo
-        if(stesso_turno(&stud2, &student) && stud2->group==NOGROUP) {
-            
-            //se hanno la stessa preferenza di nof_elems
-            if(stud2->nof_elems==student->nof_elems) {
-                
-                //se stud2.voto > mio.voto-3
-                if(stud2->voto_AdE > (student->voto_AdE-3)) {
-                    invita(stud2->matricola);
-                    counter_invites;
-                }
-            }
-        }
-        //semaforo release
-    }
-*/
 }
 
 //controlla se ha ricevuto risposta agli inviti
 //return true se tutti hanno risposto
 //return false se qualcuno non ha risposto
-int controllo_risposte(int *invitati) {
+int controllo_risposte(int msg_id, int *invitati) {
     struct msgbuf risposta;
     char messaggio[50];
     int mittente;
-    struct info_student *student;
-    struct info_group *my_group;
+    extern struct info_student *student;
+    extern struct info_group *my_group;
     
     //controlla se ha ricevuto risposta agli inviti
-    while(msgrcv(msg_id,&risposta,MSGLEN,student->matricola,IPC_NOWAIT)!=-1){
+    while(msgrcv(msg_id, &risposta, MSGLEN, student->matricola, IPC_NOWAIT)!=-1){
 	sscanf(risposta.text,"%s : %d", messaggio[50], &mittente);
 	if(strcmp("Accetto",messaggio)==0){
 	    inserisci_nel_mio_gruppo(mittente);
@@ -179,23 +153,27 @@ int controllo_risposte(int *invitati) {
 //controlla gli inviti ricevuti e li valuta
 //return true se accetta un invito
 //return false se non accetta
-int controllo_inviti() {
+int controllo_inviti(int msg_id) {
     struct msgbuf invito;
     char messaggio[50];
     int mittente;
-    struct info_student *student;
-    struct info_group *my_group;
-    int accetto=FALSE;
+    extern struct info_student *student;
+    extern struct info_group *my_group;
+    extern struct info_sim *aula;
+    int accettato=FALSE;
     
     //controlla se ha ricevuto degli inviti
     while(msgrcv(msg_id,&invito,MSGLEN,student->matricola,IPC_NOWAIT)!=-1){
 	sscanf(invito.text,"%s : %d", messaggio[50], &mittente);
-	if(student->leader) //il leader non può accettare inviti
+	if(student->leader || accettato) 
+	    //il leader non può accettare inviti
+	    //se ho già accettato un invito, gli altri li rifiuto
 	    rifiuta_invito(msg_id, mittente, n_rifiuti, max_reject);
+	    
 	else {  //valuto se accettare o meno
 	    if(aula->group[mittente]->max_voto >= student->voto_AdE && aula->group[mittente]->n_members <= student->nof_elems-1) {
 	        accetta_invito(student->matricola, mittente, msg_id);
-		accetto=TRUE;
+		accettato=TRUE;
 	    }
 	    else
 		rifiuta_invito(msg_id, mittente, n_rifiiuti, max_reject);
@@ -204,9 +182,51 @@ int controllo_inviti() {
     return accetto;
 }
 
+void mando_inviti(int msg_id) {
+    struct info_student *stud2;
+    int i;
+    for(i=0; i<POP_SIZE; i++) {
+        stud2 = &(aula->student[i]);
+        
+        //se sono dello stesso turno e non hanno un gruppo (imprescindibile per un invito)
+        if(stesso_turno(stud2, student) && stud2->group==NOGROUP) {
+            
+            //se hanno la stessa preferenza di nof_elems
+            if(stud2->nof_elems==student->nof_elems) {
+                
+                //se stud2.voto > mio.voto-3
+                if(stud2->voto_AdE > (student->voto_AdE-3)) {
+                    invita_studente(invitati, student->matricola, stud2->matricola, msg_id);
+                }
+
+            }
+        }
+    }    
+    
+    
+}
+
+//confronta le matricole di 2 studenti e verifica siano nello stesso turno
+int stesso_turno (struct info_student *mat1, struct info_student *mat2) {
+    return ((mat1->matricola)%2)==((mat2->matricola)%2);
+}
+
+//decido se conviene chiudere il gruppo(return true) oppure no(return false)
+int chiudo_gruppo() {
+    extern struct info_student *student;
+    extern struct info_group *my_group;
+    extern struct info_sim *aula;
+    
+    if(my_group->n_members==student->nof_elems || aula->time_left <= (0.5*POP_SIZE)) {
+	//chiudo il gruppo (anche se manca poco tempo)
+	my_group->is_closed=TRUE;
+    }
+    return my_group->is_closed;
+}
+
 void inserisci_nel_mio_gruppo(int matricola) {
-    struct info_student *student;
-    struct info_group *my_group;
+    extern struct info_student *student;
+    extern struct info_group *my_group;
     
     //modifichiamo i campi dello studente "matricola"
     aula->student[matricola].group = student->group;
@@ -218,7 +238,7 @@ void inserisci_nel_mio_gruppo(int matricola) {
     student->leader=TRUE;
 }
 
-void invita_processo(int *invitati, int mittente, int destinatario, int msg_id){
+void invita_studente(int *invitati, int mittente, int destinatario, int msg_id){
     struct msgbuf invito;
     static int i = 0;
     
