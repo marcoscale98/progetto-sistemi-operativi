@@ -42,6 +42,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     
     //INIZIALIZZAZIONE MEMORIA CONDIVISA
     aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
+    TEST_ERROR;
     student = &(aula->student[matricola]);
     my_group = aula->group[matricola];   
     //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
@@ -125,7 +126,8 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 	release_sem(sem_id, SEM_SHM);
     } 
  
-    
+    //FINE SIMULAZIONE
+    shmdt(shm_id);
 }
 
 //controlla se ha ricevuto risposta agli inviti
