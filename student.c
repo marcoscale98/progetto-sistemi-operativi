@@ -12,7 +12,8 @@
 #include "header/sig_util.h"
 #include "header/sem_util.h"
 #include "header/msg_util.h"
-#include "module/msg_util.c"
+#include "header/stud.h"
+#include "module/sem_util.c"
 
 #define ARRAY_LEN 10
 #define DEBUG
@@ -42,7 +43,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     //INIZIALIZZAZIONE MEMORIA CONDIVISA
     aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
     student = &(aula->student[matricola]);
-    my_group = aula->my_group[matricola];   
+    my_group = aula->group[matricola];   
     //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
     
     //INIZIALIZZAZIONE VARIABILI STUDENTE    
@@ -74,17 +75,17 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     
     //INIZIALIZZAZIONE VARIABILI MIO GRUPPO (per ora ci sono solo io)
     //struct info_group my_group;
-    my_group.n_members=1;
-    my_group.is_closed=FALSE;
-    my_group.pref_nof_elems=student->nof_elems;
-    my_group.max_voto=student->voto_AdE;
+    my_group->n_members=1;
+    my_group->is_closed=FALSE;
+    my_group->pref_nof_elems=student->nof_elems;
+    my_group->max_voto=student->voto_AdE;
     
-    //INIZIALIZZAZIONE MEMORIA CONDIVISA
+ /*   //INIZIALIZZAZIONE MEMORIA CONDIVISA
     struct info_sim *aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
     aula->student[student->matricola] = student;
     aula->group[student->matricola] = my_group;
     //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
-    
+   */ 
 #ifdef DEBUG
     printf("PID: %d\nstudent->matricola: %d\n", getpid(),student->matricola);
     printf("prob_2: %f\n", prob_2);
@@ -108,7 +109,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     
     
     //STRATEGIA INIZIALE
-    while(aula->time_left >= (0.5*POP_SIZE) && !accettato_invito && !(my_group->is_closed)) {
+    while(aula->time_left > 0 && !accettato_invito && !(my_group->is_closed)) {
         reserve_sem(sem_id, SEM_SHM);
  
 	if (controllo_risposte(msg_id, invitati)) {//se tutti hanno risposto
