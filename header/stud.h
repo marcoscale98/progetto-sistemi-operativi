@@ -24,7 +24,7 @@ void invita_studente(int *invitati, int mittente, int destinatario, int msg_id);
 
 void mando_inviti(int msg_id, int *invitati) ;
 
-void rifiuta_invito(int mittente, int msg_id, int destinatario);
+void rifiuta_invito(int mittente, int destinatario, int msg_id);
 
 //funzione che imposta a -1 l'elemento che contiene la matricola uguale a mittente
 void setta_risposta(int *invitati,int mittente);

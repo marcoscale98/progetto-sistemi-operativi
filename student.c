@@ -284,7 +284,7 @@ void invita_studente(int *invitati, int mittente, int destinatario, int msg_id){
 
 
 
-void rifiuta_invito(int mittente, int msg_id , int destinatario /*int n_rifiuti,int max_reject**/){
+void rifiuta_invito(int mittente, int destinatario , int msg_id /*int n_rifiuti,int max_reject**/){
 
     struct msgbuf invito;
     char messaggio[50];
