@@ -101,7 +101,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     TEST_ERROR;
     
     int accettato_invito = FALSE;
-    int invitati[ARRAY_LEN];
+    int invitati[nof_invites];
     int n_invitati=0;
     int n_rifiutati=0;
     for(int j=0; j<ARRAY_LEN; j++)
@@ -116,10 +116,10 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 	    //se leader true rifiuta gli inviti
 	    //se ho già accettato un invito, rifiuto i successivi
 	    //se il mio gruppo è chiuso, rifiuto gli inviti
-	    accettato_invito = rispondo_inviti(msg_id, &accettato_invito);
+	    accettato_invito = rispondo_inviti(msg_id, &accettato_invito, &n_rifiutati, max_reject);
 
 	    if (!accettato_invito && !chiudo_gruppo()) {
-		mando_inviti(msg_id, invitati);
+		mando_inviti(msg_id, invitati, &n_invitati, nof_invites);
 	    }
 	}
 	
@@ -164,7 +164,7 @@ int controllo_risposte(int msg_id, int *invitati) {
 //controlla gli inviti ricevuti e li valuta
 //return true se accetta un invito
 //return false se non accetta
-int rispondo_inviti(int msg_id, int *accettato) {
+int rispondo_inviti(int msg_id, int *accettato, int *n_rifiutati, int max_reject) {
     struct msgbuf invito;
     char messaggio[50];
     int mittente;
@@ -200,7 +200,7 @@ int max(int num1, int num2) {
     
 }
 
-void mando_inviti(int msg_id, int *invitati) {
+void mando_inviti(int msg_id, int *invitati, int *n_invitati, int nof_invites) {
     struct info_student *stud2;
     int i;
     for(i=0; i<POP_SIZE; i++) {
