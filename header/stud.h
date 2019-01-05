@@ -8,7 +8,7 @@ int chiudo_gruppo();
 //controlla gli inviti ricevuti e li valuta
 //return true se accetta un invito
 //return false se non accetta
-int controllo_inviti(int msg_id);
+int rispondo_inviti(int msg_id, int *accettato);
 
 //controlla se ha ricevuto risposta agli inviti
 //return true se tutti hanno risposto

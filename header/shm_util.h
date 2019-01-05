@@ -10,7 +10,7 @@ struct info_student{
     int matricola;  //matricola dello studente associato alla struttura
     int nof_elems;  //nof_elems dello studente
     int voto_AdE;   //voto_AdE dello studente
-    int group;     //gruppo di cui lo studente fa parte (NOGROUP oppure indice dell'array group)
+    int group;     //gruppo di cui lo studente fa parte (indice dell'array group)
     int leader;
 };
 
