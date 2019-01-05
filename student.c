@@ -269,24 +269,23 @@ void invita_studente(int *invitati, int mittente, int destinatario, int msg_id){
         fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
-    printf("Invito Spedito");
+    printf("Il Mittente : %d ha invitato il Destinatario %d",mittente,destinatario);
     invitati[i]=destinatario;
     i++;
 }
 
 
 
-void rifiuta_invito(int mittente, int msg_id, int n_rifiuti,int max_reject){
+void rifiuta_invito(int mittente, int msg_id , int destinatario /*int n_rifiuti,int max_reject**/){
 
     struct msgbuf invito;
-    int destinatario;
     char messaggio[50];
 
     char buf[8];
     sprintf(buf,"%d",mittente);
 
     while(msgrcv(msg_id,&invito,MSG_LEN,mittente,IPC_NOWAIT)!=1){
-        if(n_rifiuti<=max_reject){
+        /*if(n_rifiuti<=max_reject){ Mettere nel Main */
             sscanf(invito.text,"%s : %d", messaggio, &destinatario);
             invito.mtype=(long)destinatario;
             sprintf(invito.text,"Rifiuto :");
@@ -296,11 +295,11 @@ void rifiuta_invito(int mittente, int msg_id, int n_rifiuti,int max_reject){
                 exit(EXIT_FAILURE);
             }
             TEST_ERROR
-            printf("Invito Spedito");
+            printf("Il Destinatario : %d ha rifiutato l'invito del Mittente %d",mittente,destinatario);
             n_rifiuti ++;
-        }else{
+        /*}else{
            //accetta_invito();
-        }
+        } Mettere nel Main */
     }
 }
 
@@ -311,7 +310,6 @@ void accetta_invito(int mittente , int destinatario , int msg_id){
 
     char buf[8];
     sprintf(buf,"%d",mittente);
-    strcat(invito.text,buf);
 
     while(msgrcv(msg_id,&invito,MSG_LEN,mittente,IPC_NOWAIT)!=-1){
         sscanf(invito.text,"%s : %d", messaggio,&destinatario);
@@ -323,7 +321,7 @@ void accetta_invito(int mittente , int destinatario , int msg_id){
             exit(EXIT_FAILURE);
         }
         else
-            printf("Invito Spedito");
+            printf("Il Destinatario : %d ha accettato l'invito del Mittente %d",mittente,destinatario);
     }
 } 
 
