@@ -116,7 +116,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 	    accettato_invito = controllo_inviti(msg_id); //se leader true rifiuta gli inviti
 	    //se accetto true, esco
 	    if (!accettato_invito && !chiudo_gruppo()) {
-		mando_inviti(msg_id);
+		mando_inviti(msg_id, invitati);
 	    }
 	}
 	
@@ -137,7 +137,7 @@ int controllo_risposte(int msg_id, int *invitati) {
     extern struct info_group *my_group;
     
     //controlla se ha ricevuto risposta agli inviti
-    while(msgrcv(msg_id, &risposta, MSGLEN, student->matricola, IPC_NOWAIT)!=-1){
+    while(msgrcv(msg_id, &risposta, MSG_LEN, student->matricola, IPC_NOWAIT)!=-1){
 	sscanf(risposta.text,"%s : %d", messaggio[50], &mittente);
 	if(strcmp("Accetto",messaggio)==0){
 	    inserisci_nel_mio_gruppo(mittente);
@@ -164,7 +164,7 @@ int controllo_inviti(int msg_id) {
     int accettato=FALSE;
     
     //controlla se ha ricevuto degli inviti
-    while(msgrcv(msg_id,&invito,MSGLEN,student->matricola,IPC_NOWAIT)!=-1){
+    while(msgrcv(msg_id,&invito,MSG_LEN,student->matricola,IPC_NOWAIT)!=-1){
 	sscanf(invito.text,"%s : %d", messaggio[50], &mittente);
 	if(student->leader || accettato) 
 	    //il leader non può accettare inviti
@@ -177,13 +177,13 @@ int controllo_inviti(int msg_id) {
 		accettato=TRUE;
 	    }
 	    else
-		rifiuta_invito(msg_id, mittente, n_rifiiuti, max_reject);
+		rifiuta_invito(msg_id, mittente, n_rifiuti, max_reject);
 	}
     }
-    return accetto;
+    return accettato;
 }
 
-void mando_inviti(int msg_id) {
+void mando_inviti(int msg_id, int *invitati) {
     struct info_student *stud2;
     int i;
     for(i=0; i<POP_SIZE; i++) {
@@ -321,7 +321,7 @@ int hanno_risposto(int *invitati){
             ha_risposto = FALSE;
         }
     }
-    return return_value;
+    return ha_risposto;
 }
 
 //funzione che imposta a -1 l'elemento che contiene la matricola uguale a mittente

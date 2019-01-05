@@ -22,7 +22,7 @@ void inserisci_nel_mio_gruppo(int matricola);
 
 void invita_studente(int *invitati, int mittente, int destinatario, int msg_id);
 
-void mando_inviti(int msg_id) ;
+void mando_inviti(int msg_id, int *invitati) ;
 
 void rifiuta_invito(int mittente, int msg_id, int n_rifiuti,int max_reject);
 
