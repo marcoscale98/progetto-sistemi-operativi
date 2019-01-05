@@ -32,4 +32,6 @@ void setta_risposta(int *invitati,int mittente);
 //confronta le matricole di 2 studenti e verifica siano nello stesso turno
 int stesso_turno (struct info_student *mat1, struct info_student *mat2);
 
+int max(int num1, int num2);
+
 #endif

@@ -79,7 +79,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     my_group->pref_nof_elems=student->nof_elems;
     my_group->max_voto=student->voto_AdE;
     
-/*   //INIZIALIZZAZIONE MEMORIA CONDIVISA
+/*  //INIZIALIZZAZIONE MEMORIA CONDIVISA
     struct info_sim *aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
     aula->student[student->matricola] = student;
     aula->group[student->matricola] = my_group;
@@ -140,7 +140,7 @@ int controllo_risposte(int msg_id, int *invitati) {
     
     //controlla se ha ricevuto risposta agli inviti
     while(msgrcv(msg_id, &risposta, MSG_LEN, student->matricola, IPC_NOWAIT)!=-1){
-	sscanf(risposta.text,"%s : %d", messaggio[50], &mittente);
+	sscanf(risposta.text,"%s : %d", messaggio, &mittente);
 	if(strcmp("Accetto",messaggio)==0){
 	    inserisci_nel_mio_gruppo(mittente);
 	    setta_risposta(invitati,mittente);
@@ -172,14 +172,14 @@ int rispondo_inviti(int msg_id, int *accettato) {
     
     //controlla se ha ricevuto degli inviti
     while(msgrcv(msg_id,&invito,MSG_LEN,student->matricola,IPC_NOWAIT)!=-1){
-	sscanf(invito.text,"%s : %d", messaggio[50], &mittente);
+	sscanf(invito.text,"%s : %d", messaggio, &mittente);
 	if(student->leader || *accettato || my_group->is_closed) 
 	    //il leader non può accettare inviti
 	    //se ho già accettato un invito, gli altri li rifiuto
-	    rifiuta_invito(msg_id, mittente, n_rifiuti, max_reject);
+	    rifiuta_invito(msg_id, mittente, n_rifiutati, max_reject);
 	    
 	else {  //valuto se accettare o meno
-	    if(aula->group[mittente]->max_voto >= student->voto_AdE && aula->group[mittente]->n_members <= student->nof_elems-1) {
+	    if(n_rifiutati==max_reject || (aula->group[mittente]->max_voto >= student->voto_AdE && aula->group[mittente]->n_members <= student->nof_elems-1)) {
 	        accetta_invito(student->matricola, mittente, msg_id);
 		*accettato=TRUE;
 	    }
@@ -190,6 +190,14 @@ int rispondo_inviti(int msg_id, int *accettato) {
     return *accettato;
 }
 
+int max(int num1, int num2) {
+    if(num1>num2)
+        return num1;
+    else
+	return num2;
+    
+}
+
 void mando_inviti(int msg_id, int *invitati) {
     struct info_student *stud2;
     int i;
@@ -197,7 +205,7 @@ void mando_inviti(int msg_id, int *invitati) {
         stud2 = &(aula->student[i]);
         
         //se sono dello stesso turno e non hanno un gruppo (imprescindibile per un invito)
-        if(stesso_turno(stud2, student) && stud2->group==NOGROUP) {
+        if(stesso_turno(stud2, student) && stud2->group==NOGROUP && n_invitati<nof_invites) {
             
             //se hanno la stessa preferenza di nof_elems
             if(stud2->nof_elems==student->nof_elems) {
@@ -249,7 +257,7 @@ void inserisci_nel_mio_gruppo(int matricola) {
     aula->group[matricola]=NULL; //non esiste più il precedente gruppo
     //modifico i campi del gruppo
     my_group->n_members += 1;
-    my_group->max_voto = max(student->voto_AdE, aula->student[matricola]);
+    my_group->max_voto = max(student->voto_AdE, aula->student[matricola].voto_AdE);
     //modifico il campo di student
     student->leader=TRUE;
 }
