@@ -29,9 +29,9 @@ void handler_sigusr1(int sig){
     TEST_ERROR;
 
     struct msgbuf message;
-    msgrcv(msg_id,&message,sizeof(message.mtext),student->matricola,0);
+    msgrcv(msg_id,&message,sizeof(message.text),student->matricola,0);
 
-    printf("Student (PID: %d). Voto: %d\n", getpid(), atoi(message->text));
+    printf("Student (PID: %d). Voto: %d\n", getpid(), atoi(message.text));
 }
 
 //funzione richiamata per impostare l'handler di SIGALRM
@@ -159,9 +159,6 @@ int controllo_risposte(int *invitati) {
     struct msgbuf risposta;
     char messaggio[50];
     int mittente;
-    extern struct info_student *student;
-    extern struct info_group *my_group;
-    extern int msg_id;
     
     //controlla se ha ricevuto risposta agli inviti
     while(msgrcv(msg_id, &risposta, MSG_LEN, student->matricola, IPC_NOWAIT)!=-1){
@@ -191,10 +188,6 @@ int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject) {
     struct msgbuf invito;
     char messaggio[50];
     int mittente;
-    extern struct info_student *student;
-    extern struct info_group *my_group;
-    extern struct info_sim *aula;
-    extern int msg_id;
     
     //controlla se ha ricevuto degli inviti
     while(msgrcv(msg_id, &invito,MSG_LEN,student->matricola,IPC_NOWAIT)!=-1){
@@ -225,7 +218,6 @@ int max(int num1, int num2) {
 }
 
 void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
-    extern int msg_id;
     struct info_student *stud2;
     int i;
     for(i=0; i<POP_SIZE; i++) {
@@ -263,9 +255,6 @@ int stesso_turno (struct info_student *mat1, struct info_student *mat2) {
 
 //decido se conviene chiudere il gruppo(return true) oppure no(return false)
 int chiudo_gruppo() {
-    extern struct info_student *student;
-    extern struct info_group *my_group;
-    extern struct info_sim *aula;
     
     if(my_group->n_members==4 || my_group->n_members==student->nof_elems || aula->time_left <= (0.5*POP_SIZE)) {
 	//chiudo il gruppo (anche se manca poco tempo)
@@ -276,8 +265,6 @@ int chiudo_gruppo() {
 }
 
 void inserisci_nel_mio_gruppo(int matricola) {
-    extern struct info_student *student;
-    extern struct info_group *my_group;
     
     if(my_group->n_members<4) {
 	//modifichiamo i campi dello studente "matricola"
@@ -295,9 +282,6 @@ void inserisci_nel_mio_gruppo(int matricola) {
 }
 
 void invita_studente(int destinatario, int *invitati, int *n_invitati){
-    extern int msg_id;
-    extern struct info_student *student;
-    struct msgbuf invito;
     
     invito.mtype = destinatario;
     sprintf(invito.text,"Invito : ");
@@ -319,9 +303,7 @@ void invita_studente(int destinatario, int *invitati, int *n_invitati){
 
 void rifiuta_invito(int mittente, int *n_rifiutati){
     //il destinatario dell'invito è stuudent->matricola
-    extern int msg_id;
-    extern struct info_student *student;
-    struct msgbuf rifiuto;
+
 //    char messaggio[50];
 
 //    char buf[8];
@@ -347,8 +329,6 @@ void rifiuta_invito(int mittente, int *n_rifiutati){
 }
 
 void accetta_invito(int mittente){ //il destinatario dell'invito è student->matricola
-    extern int msg_id;
-    extern struct info_student *student;
     
 //    char messaggio[50];
     struct msgbuf accetto;
