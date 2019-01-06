@@ -21,6 +21,26 @@ struct info_group *my_group;
 struct info_sim *aula;
 int msg_id;
 
+//handler per SIGUSR1: per processi studente
+void handler_sigusr1(int sig){
+    printf("Student (PID: %d). Bloccato. Aspetto il voto\n",getpid());
+    int msg_id;
+    msg_id = msgget(IPC_KEY,0666);
+    TEST_ERROR;
+
+    struct msgbuf message;
+    msgrcv(msg_id,&message,sizeof(message.mtext),student->matricola,0);
+
+    printf("Student (PID: %d). Voto: %d\n", getpid(), atoi(message->text));
+}
+
+//funzione richiamata per impostare l'handler di SIGALRM
+int sa_sigusr1(){
+    struct sigaction sa;
+    sa.sa_handler = handler_sigusr1;
+    return sigaction(SIGUSR1,&sa,NULL);
+}
+
 int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]=prob_2, argv[3]=prob_3, argv[4]=nof_invites, argv[5]=max_reject
 
     if(argc!=6){
@@ -28,6 +48,9 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
         exit(EXIT_FAILURE);
     }
     
+    //set handler
+    sa_sigusr1();
+
     //INIZIALIZZAZIONE IPC
     int sem_id, shm_id;
     sem_id = semget(IPC_KEY, N_SEM, 0666);

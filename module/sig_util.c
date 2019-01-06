@@ -2,6 +2,7 @@
 #include "../header/sem_util.h"
 #include "../header/sig_util.h"
 #include "../header/shm_util.h"
+#include "../header/stud.h"
 #include "../header/config.h"
 #include <stdio.h>
 #include <unistd.h>
@@ -43,7 +44,7 @@ void handler_sigint(int sig){
 //handler per SIGALRM: allo scadere del timer sospende i processi studente
 void handler_sigalrm(int sig){
     printf("Gestore (PID: %d). Tempo scaduto! Gli studenti si fermino\n",getpid());
-    killpg(0,SIGSTOP);
+    killpg(0,SIGUSR1);
     TEST_ERROR;
 }
 
