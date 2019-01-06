@@ -83,9 +83,9 @@ int main(){                 //codice del gestore
     int sem_id, shm_id, msg_id;
     sem_id = semget(IPC_KEY,N_SEM,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
-    msg_id = semget(IPC_KEY,2,IPC_CREAT|IPC_EXCL|0666);
+    msg_id = msgget(IPC_KEY, IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
-    shm_id = semget(IPC_KEY,SHM_SIZE,IPC_CREAT|IPC_EXCL|0666);
+    shm_id = shmget(IPC_KEY,SHM_SIZE,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
 
     //acquisizione indirizzo memoria condivisa
