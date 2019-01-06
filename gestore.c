@@ -11,7 +11,6 @@
 #include "header/error.h"
 #include "header/conf_reader.h"
 #include "header/sem_util.h"
-#include "header/msg_util.h"
 #include "header/sig_util.h"
 #include "header/shm_util.h"
 #include "header/time_util.h"
