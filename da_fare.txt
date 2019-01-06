@@ -1,23 +1,13 @@
-Gestore: (Davide)
-    - Sistemare semaforo
-    - timer e segnali
-    - gestione SIGALRM timer per fa stoppare gli student
-    - gestione del voto e invio agli student
-
-Inviti: (Mattia)
-    - coda di messaggi (una sola)
-    - tipo del messaggio: pid del destinatario
-    - messaggio: invito
-        - "<PID> invito": invito (per esempio)
-        - "accetto" ..
-        - "rifiuto" ..
+Gestore:
+    - inserire inizializzazione memoria condivisa
 
 Studente: (Marco)
-    (memoria condivisa: voti, matricola, gruppi ecc..)
+    - testare
 
-    - Strategia degli inviti (invitare con voto_AdE maggiore)
-    - strategia delle accettazioni e rifiuti
-    - chiusura dei gruppi quando manca poco
-    
 Makefile:
-    - crearlo per agevolare la compilazione e l'esecuzione
+    - aggiungere eventuali altri moduli
+
+Varie:
+    - inserire printf
+    - testare
+    - commentare e sistemare codice
