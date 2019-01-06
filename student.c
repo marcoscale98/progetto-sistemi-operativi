@@ -6,12 +6,14 @@
 #include <sys/types.h>
 #include <sys/shm.h>
 #include <sys/msg.h>
+#include <signal.h>
 #include "header/shm_util.h"
 #include "header/error.h"
 #include "header/config.h"
 #include "header/sig_util.h"
 #include "header/sem_util.h"
 #include "header/stud.h"
+
 
 #define ARRAY_LEN 10
 #define DEBUG
@@ -32,6 +34,7 @@ void handler_sigusr1(int sig){
     msgrcv(msg_id,&message,sizeof(message.text),student->matricola,0);
 
     printf("Student (PID: %d). Voto: %d\n", getpid(), atoi(message.text));
+    exit(EXIT_SUCCESS);
 }
 
 //funzione richiamata per impostare l'handler di SIGALRM
@@ -282,7 +285,7 @@ void inserisci_nel_mio_gruppo(int matricola) {
 }
 
 void invita_studente(int destinatario, int *invitati, int *n_invitati){
-    
+    struct msgbuf invito;
     invito.mtype = destinatario;
     sprintf(invito.text,"Invito : ");
 
@@ -303,7 +306,7 @@ void invita_studente(int destinatario, int *invitati, int *n_invitati){
 
 void rifiuta_invito(int mittente, int *n_rifiutati){
     //il destinatario dell'invito è stuudent->matricola
-
+    struct msgbuf rifiuto;
 //    char messaggio[50];
 
 //    char buf[8];
