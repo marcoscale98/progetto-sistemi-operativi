@@ -1,11 +1,10 @@
 Gestore:
     - inserire inizializzazione memoria condivisa
+    - correggere blocco studenti a fine simulazione
 
 Studente: (Marco)
     - testare
-
-Makefile:
-    - aggiungere eventuali altri moduli
+    - aggiungere handler di sigusr1
 
 Varie:
     - inserire printf

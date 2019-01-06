@@ -12,7 +12,6 @@
 #include "header/sig_util.h"
 #include "header/sem_util.h"
 #include "header/stud.h"
-#include "module/sem_util.c"
 
 #define ARRAY_LEN 10
 #define DEBUG
