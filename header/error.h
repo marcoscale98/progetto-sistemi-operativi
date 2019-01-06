@@ -13,6 +13,7 @@
                        __LINE__,\
                        getpid(),\
                        errno,\
-                       strerror(errno)); exit(EXIT_FAILURE);}
+                       strerror(errno)); \
+                       exit(EXIT_FAILURE);}
 
 #endif

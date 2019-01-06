@@ -1,4 +1,4 @@
-gestore: gestore.c sem_util.o conf_reader.o time_util.o sig_util.o student header/shm_util.h header/error.h header/config.h
+gestore: gestore.c sem_util.o conf_reader.o time_util.o sig_util.o student header/shm_util.h header/error.h header/config.h header/stud.h
 	@gcc gestore.c sem_util.o conf_reader.o time_util.o sig_util.o -o gestore
 	@rm -f *.o
 	@echo Compilazione completata.

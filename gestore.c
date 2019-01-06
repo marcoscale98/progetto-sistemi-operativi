@@ -15,6 +15,7 @@
 #include "header/shm_util.h"
 #include "header/time_util.h"
 #include "header/config.h"
+#include "header/stud.h"
 
 //stampa per ogni voto il numero di studenti che ha tale voto
 void print_data(int array[], int size){
@@ -122,12 +123,12 @@ int main(){                 //codice del gestore
 
     for(i=0;i<POP_SIZE;i++){
         struct info_student stud = shared->student[i];      //contiene la struttura dello studente in posizione i
-        struct info_group grp = shared->group[stud.group];      //contiene il gruppo dello studente stud
-        int voto_SO = grp.max_voto;     //massimo voto che lo studente i puo' prendere
+        struct info_group *grp = shared->group[stud.group];      //contiene il gruppo dello studente stud
+        int voto_SO = grp->max_voto;     //massimo voto che lo studente i puo' prendere
 
-        if(!grp.is_closed) //azzera il voto se il gruppo non e' chiuso
+        if(!grp->is_closed) //azzera il voto se il gruppo non e' chiuso
             voto_SO = 0;
-        else if(stud.nof_elems != grp.n_members)    //sottrae 3 se non e' stata rispettata la preferenza
+        else if(stud.nof_elems != grp->n_members)    //sottrae 3 se non e' stata rispettata la preferenza
             voto_SO-=3;
 
         //aggiornamento dei dati
