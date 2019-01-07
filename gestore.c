@@ -74,7 +74,9 @@ int main(){                 //codice del gestore
                 printf("ERRORE: PID: %d, %s, %d. Invocazione di execvp fallita\n",getpid(),__FILE__,__LINE__);
                 break;
             default:
+                #ifdef DEBUG
                 printf("Gestore (PID: %d). Creato lo studente con matricola %d\n",getpid(),i);
+                #endif
                 break;
         }    
     }

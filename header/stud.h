@@ -1,6 +1,8 @@
 #ifndef _STUD_H_
 #define _STUD_H_
 
+#include "shm_util.h"
+
 #define MSG_LEN 100
 
 struct msgbuf{
@@ -11,7 +13,7 @@ struct msgbuf{
 //controlla se ha ricevuto risposta agli inviti
 //return true se tutti hanno risposto
 //return false se qualcuno non ha risposto
-int controllo_risposte(int *invitati);
+int controllo_risposte(int *invitati, int n_invitati);
 
 //controlla gli inviti ricevuti e li valuta
 //return true se accetta un invito
@@ -37,9 +39,15 @@ void rifiuta_invito(int mittente, int *n_rifiutati);
 void accetta_invito(int mittente);
 
 //controlla che tutti gli invitati abbiano risposto agli inviti
-int hanno_risposto(int *invitati);
+int hanno_risposto(int *invitati, int n_invitati);
 
 //funzione che imposta a -1 l'elemento che contiene la matricola uguale a mittente
-void setta_risposta(int mittente, int *invitati);
+void setta_risposta(int mittente, int *invitati, int n_invitati);
+
+//handler per SIGUSR1: per processi studente
+void handler_sigusr1(int sig);
+
+//funzione richiamata per impostare l'handler di SIGALRM
+int sa_sigusr1();
 
 #endif

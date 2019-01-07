@@ -16,7 +16,6 @@
 
 
 #define ARRAY_LEN 10
-#define DEBUG
 
 struct info_student *student;
 struct info_group *my_group;
@@ -137,7 +136,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     while(aula->time_left > 0) {
         reserve_sem(sem_id, SEM_SHM);
 	
-	if (controllo_risposte(invitati)) {//se tutti hanno risposto
+	if (controllo_risposte(invitati, n_invitati)) {//se tutti hanno risposto
 	    //se leader true rifiuta gli inviti
 	    //se ho già accettato un invito, rifiuto i successivi
 	    //se il mio gruppo è chiuso, rifiuto gli inviti
@@ -158,7 +157,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 //controlla se ha ricevuto risposta agli inviti
 //return true se tutti hanno risposto
 //return false se qualcuno non ha risposto
-int controllo_risposte(int *invitati) {
+int controllo_risposte(int *invitati, int n_invitati) {
     struct msgbuf risposta;
     char messaggio[50];
     int mittente;
@@ -168,7 +167,7 @@ int controllo_risposte(int *invitati) {
 	sscanf(risposta.text,"%s : %d", messaggio, &mittente);
 	if(strcmp("Accetto",messaggio)==0){
 	    inserisci_nel_mio_gruppo(mittente);
-	    setta_risposta(mittente, invitati);
+	    setta_risposta(mittente, invitati, n_invitati);
 	    #ifdef DEBUG
 		printf("Informazioni aggiornate gruppo %d\n", student->group);
 		printf("n_members: %d\n", my_group->n_members);
@@ -177,10 +176,10 @@ int controllo_risposte(int *invitati) {
 	    #endif
 	}
 	else if(strcmp("Rifiuto",messaggio)==0){
-	    setta_risposta(mittente, invitati);
+	    setta_risposta(mittente, invitati, n_invitati);
 	}
     }
-    return hanno_risposto(invitati);
+    return hanno_risposto(invitati, n_invitati);
 
 }
 
@@ -305,7 +304,7 @@ void invita_studente(int destinatario, int *invitati, int *n_invitati){
 }
 
 void rifiuta_invito(int mittente, int *n_rifiutati){
-    //il destinatario dell'invito è stuudent->matricola
+    //il destinatario dell'invito è student->matricola
     struct msgbuf rifiuto;
 //    char messaggio[50];
 
@@ -315,7 +314,7 @@ void rifiuta_invito(int mittente, int *n_rifiutati){
 //    while(msgrcv(msg_id,&invito,MSG_LEN,mittente,IPC_NOWAIT)!=1){
         /*if(n_rifiuti<=max_reject){ Mettere nel Main */
 //            sscanf(invito.text,"%s : %d", messaggio, &destinatario);
-            rifiuto.mtype=(long)mittente;
+            rifiuto.mtype = mittente;
             sprintf(rifiuto.text,"Rifiuto : %d", student->matricola);
  //           strcat(invito.text, buf); //matricola di chi accetta
             if(msgsnd(msg_id, &rifiuto, MSG_LEN, 0)<0) {
@@ -355,10 +354,10 @@ void accetta_invito(int mittente){ //il destinatario dell'invito è student->mat
 } 
 
 //controlla che tutti gli invitati abbiano risposto agli inviti
-int hanno_risposto(int *invitati){
+int hanno_risposto(int *invitati, int n_invitati){
     int ha_risposto = TRUE;
     int i;
-    for(i=0;i<ARRAY_LEN && ha_risposto;i++){
+    for(i=0;i<n_invitati && ha_risposto;i++){
         if(invitati[i]==-1){
             ha_risposto = FALSE;
         }
@@ -367,9 +366,9 @@ int hanno_risposto(int *invitati){
 }
 
 //funzione che imposta a -1 l'elemento che contiene la matricola uguale a mittente
-void setta_risposta(int mittente, int *invitati){
+void setta_risposta(int mittente, int *invitati, int n_invitati){
     int i=0;
-    while(i<ARRAY_LEN && !invitati[i]==mittente){
+    while(i<n_invitati && invitati[i]!=mittente){
         i++;
     }
     invitati[i]=-1;

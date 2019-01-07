@@ -6,5 +6,6 @@
 #define FALSE 0
 #define ARG_SIZE 32
 #define IPC_KEY ftok("opt.conf",0)
+#define DEBUG
 
 #endif
