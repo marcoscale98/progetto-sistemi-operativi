@@ -60,7 +60,10 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 
     //set handler
     sa_sigusr1();
-
+    TEST_ERROR;
+    sa_sigsegv();
+    TEST_ERROR;
+    
     //INIZIALIZZAZIONE IPC
     int sem_id, shm_id;
     sem_id = semget(IPC_KEY, N_SEM, 0666);

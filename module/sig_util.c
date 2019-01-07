@@ -60,6 +60,13 @@ int sa_sigint(){
     return sigaction(SIGINT,&sa,NULL);
 }
 
+//funzione richiamata per impostare l'handler di SIGSEGV
+int sa_sigsegv(){
+    struct sigaction sa;
+    sa.sa_handler = handler_sigint;
+    return sigaction(SIGSEGV,&sa,NULL);
+}
+
 //funzione richiamata per impostare l'handler di SIGALRM
 int sa_sigalrm(){
     struct sigaction sa;

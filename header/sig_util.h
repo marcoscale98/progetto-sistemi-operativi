@@ -10,6 +10,9 @@ void handler_sigalrm(int sig);
 //funzione richiamata per impostare l'handler di SIGINT
 int sa_sigint();
 
+//funzione richiamata per impostare l'handler di SIGSEGV
+int sa_sigsegv();
+
 //funzione richiamata per impostare l'handler di SIGALRM
 int sa_sigalrm();
 

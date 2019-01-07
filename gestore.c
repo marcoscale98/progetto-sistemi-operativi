@@ -17,6 +17,7 @@
 #include "header/config.h"
 #include "header/stud.h"
 
+
 // stampa per ogni voto il numero di studenti che ha tale voto
 void print_data(int array[], int size){
     if(array && size>0){
@@ -41,6 +42,8 @@ int main(){                 //codice del gestore
     sa_sigint();
     TEST_ERROR;
     sa_sigalrm();
+    TEST_ERROR;
+    sa_sigsegv();
     TEST_ERROR;
 
 #ifdef DEBUG
