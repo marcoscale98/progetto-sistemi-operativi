@@ -44,6 +44,11 @@ void handler_sigint(int sig){
 //handler per SIGALRM: allo scadere del timer sospende i processi studente
 void handler_sigalrm(int sig){
     printf("Gestore (PID: %d). Tempo scaduto! Gli studenti si fermino\n",getpid());
+
+    struct sigaction sa;
+    sa.sa_handler = SIG_IGN;    //fa ignorare al gestore il segnale sigusr1
+    sigaction(SIGUSR1,&sa,NULL);
+    TEST_ERROR;
     killpg(0,SIGUSR1);
     TEST_ERROR;
 }

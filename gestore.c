@@ -17,7 +17,7 @@
 #include "header/config.h"
 #include "header/stud.h"
 
-//stampa per ogni voto il numero di studenti che ha tale voto
+// stampa per ogni voto il numero di studenti che ha tale voto
 void print_data(int array[], int size){
     if(array && size>0){
         printf("VOTO\tFREQUENZA\n");
@@ -34,6 +34,7 @@ void print_data(int array[], int size){
         }
     }
 }
+//
 
 int main(){                 //codice del gestore
     //set degli handler
@@ -42,12 +43,19 @@ int main(){                 //codice del gestore
     sa_sigalrm();
     TEST_ERROR;
 
+#ifdef DEBUG
+    printf("_Gestore (PID: %d). Inizio\n",getpid());
+#endif
     //inizializzazione delle variabili della simulazione
     struct sim_opt options;
     if(init_options(&options)==-1){
         printf("ERRORE: PID: %d. %s, %d. Errore nell'inizializzazione delle variabili\n", getpid(), __FILE__, __LINE__);
         exit(EXIT_FAILURE);
     }
+
+#ifdef DEBUG
+    printf("_Gestore (PID: %d). init_options fatta\n",getpid());
+#endif
 
     //set di args
     char matricola[ARG_SIZE],
@@ -74,13 +82,17 @@ int main(){                 //codice del gestore
                 printf("ERRORE: PID: %d, %s, %d. Invocazione di execvp fallita\n",getpid(),__FILE__,__LINE__);
                 break;
             default:
+                /*
                 #ifdef DEBUG
                 printf("Gestore (PID: %d). Creato lo studente con matricola %d\n",getpid(),i);
                 #endif
+                */
                 break;
         }    
     }
-
+#ifdef DEBUG
+    printf("_Gestore (PID: %d). Creati figli\n",getpid());
+#endif
     //creazione ipc
     int sem_id, shm_id, msg_id;
     sem_id = semget(IPC_KEY,N_SEM,IPC_CREAT|IPC_EXCL|0666);
@@ -95,16 +107,29 @@ int main(){                 //codice del gestore
     shared = shmat(shm_id,NULL,0);
     TEST_ERROR;
 
+#ifdef DEBUG
+    printf("_Gestore (PID: %d). Create ipc\n",getpid());
+#endif
+
     //inizializzazione del semaforo di scrittura
     init_sem_in_use(sem_id,SEM_SHM);
     TEST_ERROR;
     //semaforo SEM_READY inizializzato a 0
     init_sem_in_use(sem_id,SEM_READY);
     TEST_ERROR;
+#ifdef DEBUG
+    printf("_Gestore (PID: %d). Aspetto l'inizializzazione degli student\n",getpid());
+#endif
     //attesa dell'inizializzazione degli studenti
     while(get_sem_val(sem_id,SEM_READY)!=-POP_SIZE);
+#ifdef DEBUG
+    printf("_Gestore (PID: %d). Ora sblocco gli studenti\n",getpid());
+#endif
     //sblocco degli studenti
     init_sem(sem_id,SEM_READY,POP_SIZE);
+#ifdef DEBUG
+    printf("Gestore (PID: %d). Studenti sbloccati\n",getpid());
+#endif
 
     //set del timer e inizio simulazione
     set_timer(options.sim_time);
@@ -117,7 +142,9 @@ int main(){                 //codice del gestore
             release_sem(sem_id,SEM_SHM);
         }
     } //allo scattare del timer verrà invocato l'handler
-
+#ifdef DEBUG
+    printf("_Gestore (PID: %d). Calcolo dei voti\n",getpid());
+#endif
     //calcolo dei voti
     int AdE[POP_SIZE], SO[POP_SIZE];
     memset(AdE,-1,sizeof(AdE));

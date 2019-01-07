@@ -14,7 +14,6 @@
 #include "header/sem_util.h"
 #include "header/stud.h"
 
-
 #define ARRAY_LEN 10
 
 struct info_student *student;
@@ -49,7 +48,16 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
         printf("Numero di argomenti inseriti non corretto\n");
         exit(EXIT_FAILURE);
     }
-    
+
+#ifdef DEBUG
+    printf("_Student (PID: %d). Parametri inizializzati\n",getpid());
+    printf("_matricola: %s\n",argv[1]);
+    printf("_prob_2: %s\n", argv[2]);
+    printf("_prob_3: %s\n", argv[3]);
+    printf("_nof_invites: %s\n", argv[4]);
+    printf("_max_reject: %s\n", argv[5]);
+#endif
+
     //set handler
     sa_sigusr1();
 
@@ -64,6 +72,9 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     
     int matricola = atoi(argv[1]);
     
+#ifdef DEBUG
+    printf("_Student (PID: %d). ipc agganciate\n",getpid());
+#endif
     //INIZIALIZZAZIONE MEMORIA CONDIVISA
     aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
     TEST_ERROR;
@@ -71,6 +82,10 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     my_group = aula->group[matricola];   
     //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
     
+#ifdef DEBUG
+    printf("_Student (PID: %d). Memoria condivisa inizializzata\n",getpid());
+#endif
+
     //INIZIALIZZAZIONE VARIABILI STUDENTE    
     float prob_2 = atoi(argv[2])/100.0,
           prob_3 = atoi(argv[3])/100.0;
@@ -82,12 +97,17 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     student->group = matricola;
     student->leader=FALSE;
     
+#ifdef DEBUG
+    printf("_Student (PID: %d). prima parte inizializzazione fatta\n",getpid());
+#endif  
+
     //inizializzazione voto_AdE
     srand(getpid());
     student->voto_AdE = rand()%13 + 18;  //compreso tra 18 e 30
-
+#ifdef DEBUG
+    printf("_Student (PID: %d). voto_AdE determinato\n",getpid());
+#endif  
     //inizializzazione nof_elems
-    srand(getpid());
     int val = rand()%POP_SIZE;
     if(val<POP_SIZE*prob_2)
         student->nof_elems = 2;
@@ -96,20 +116,41 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     else //if(val>=popsize*(prob_2+prob_3) && val<popsize)
         student->nof_elems = 4;
      
-    
+#ifdef DEBUG
+    printf("_Student (PID: %d). nof_elems determinato\n",getpid());
+#endif  
     //INIZIALIZZAZIONE VARIABILI MIO GRUPPO (per ora ci sono solo io)
     //struct info_group my_group;
+    
+
+    /*************************************************************************
+     *
+     *  C'E' UN PROBLEMA IN QUESTA PARTE COMMENTATA, BLOCCA I PROCESSI STUDENT
+     *
+     *************************************************************************
+
     my_group->n_members=1;
     my_group->is_closed=FALSE;
     my_group->pref_nof_elems=student->nof_elems;
     my_group->max_voto=student->voto_AdE;
-    
+
+    *
+    *
+    */
+
+
+#ifdef DEBUG
+    printf("_Student (PID: %d). student inizializzato\n",getpid());
+#endif
+
 /*  //INIZIALIZZAZIONE MEMORIA CONDIVISA
     struct info_sim *aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
     aula->student[student->matricola] = student;
     aula->group[student->matricola] = my_group;
     //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
 */ 
+
+/*
 #ifdef DEBUG
     printf("PID: %d\nstudent->matricola: %d\n", getpid(),student->matricola);
     printf("prob_2: %f\n", prob_2);
@@ -120,16 +161,22 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     printf("student->voto_AdE: %d\n", student->voto_AdE);
     printf("student->nof_elems: %d\n", student->nof_elems);
 #endif
-        
+*/     
+#ifdef DEBUG
+    printf("_Student (PID: %d). Effettuo reserve_sem\n",getpid());
+#endif 
     reserve_sem(sem_id, SEM_READY);
     TEST_ERROR;
     
+#ifdef DEBUG
+    printf("_Student (PID: %d). Sbloccato\n",getpid());
+#endif
+
     int accettato_invito = FALSE;
     int invitati[nof_invites];
     int n_invitati=0;
     int n_rifiutati=0;
-    for(int j=0; j<ARRAY_LEN; j++)
-        invitati[j]=-1;
+    memset(invitati,-1,sizeof(invitati));
     
     
     //STRATEGIA INVITI
