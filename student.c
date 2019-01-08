@@ -87,6 +87,8 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     
 #ifdef DEBUG
     printf("_Student (PID: %d). Memoria condivisa inizializzata\n",getpid());
+    printf("Indirizzo di memoria condivisa di student: %p\n", student);
+    printf("Indirizzo di memoria condivisa di my_group: %p\n", my_group);
 #endif
 
     //INIZIALIZZAZIONE VARIABILI STUDENTE    
@@ -201,7 +203,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     } 
  
     //FINE SIMULAZIONE
-    shmdt(aula);
+    sleep(5); //aspetta il voto dal gestore
 }
 
 //controlla se ha ricevuto risposta agli inviti
