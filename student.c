@@ -30,8 +30,11 @@ void handler_sigusr1(int sig){
 
     struct msgbuf message;
     msgrcv(msg_id,&message,sizeof(message.text),student->matricola,0);
+    printf("Student (PID: %d). voto_SO: %d\n", getpid(), atoi(message.text));
 
-    printf("Student (PID: %d). Voto: %d\n", getpid(), atoi(message.text));
+    //FINE SIMULAZIONE
+    shmdt(aula);
+
     exit(EXIT_SUCCESS);
 }
 
@@ -42,7 +45,8 @@ int sa_sigusr1(){
     return sigaction(SIGUSR1,&sa,NULL);
 }
 
-int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]=prob_2, argv[3]=prob_3, argv[4]=nof_invites, argv[5]=max_reject
+//argv[0]="student", argv[1]=matricola, argv[2]=prob_2, argv[3]=prob_3, argv[4]=nof_invites, argv[5]=max_reject
+int main(int argc,char *argv[]){
 
     if(argc!=6){
         printf("Numero di argomenti inseriti non corretto\n");
@@ -61,9 +65,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     //set handler
     sa_sigusr1();
     TEST_ERROR;
-    sa_sigsegv();
-    TEST_ERROR;
-    
+
     //INIZIALIZZAZIONE IPC
     int sem_id, shm_id;
     sem_id = semget(IPC_KEY, N_SEM, 0666);
@@ -130,7 +132,11 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
 
     /*************************************************************************
      *
-     *  C'E' UN PROBLEMA IN QUESTA PARTE COMMENTATA, BLOCCA I PROCESSI STUDENT
+     *  C'E' UN PROBLEMA IN QUESTA PARTE COMMENTATA, BLOCCA I PROCESSI STUDENT:
+     *
+     *  anche mettendo soltanto la riga 139 si blocca: c'e' un problema con my_group,
+     *  ed e' anche perche' il gestore da SEGMENTATION FAULT (l'ho lasciato così
+     *  si vede dove al gestore da' grp=NULL)
      *
      *************************************************************************
 
@@ -138,7 +144,7 @@ int main(int argc,char *argv[]){ //argv[0]="student", argv[1]=matricola, argv[2]
     my_group->is_closed=FALSE;
     my_group->pref_nof_elems=student->nof_elems;
     my_group->max_voto=student->voto_AdE;
-
+    
     *
     *
     */
