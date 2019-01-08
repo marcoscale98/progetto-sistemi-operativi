@@ -16,9 +16,9 @@
 #include <sys/shm.h>
 
 
-//handler per SIGINT: rimuove le strutture ipc e poi uccide il process group
+//handler per SIGINT e SIGSEGV: rimuove le strutture ipc e poi uccide il process group
 void handler_sigint(int sig){
-    printf("Gestore (PID: %d). Ricevuto SIGINT: uccisione del process group\n",getpid());
+    printf("Gestore (PID: %d). Ricevuto %s: uccisione del process group\n",getpid(),strsignal(sig));
 
     int sem_id, msg_id, shm_id;
     sem_id = semget(IPC_KEY,N_SEM,0666);
@@ -29,11 +29,11 @@ void handler_sigint(int sig){
     TEST_ERROR;
     
     //rimozione ipc
-    semctl(sem_id,IPC_RMID, 0);
+    semctl(sem_id,0,IPC_RMID);
     TEST_ERROR;
-    shmctl(shm_id,IPC_RMID, 0);
+    shmctl(shm_id,IPC_RMID,NULL);
     TEST_ERROR;
-    msgctl(msg_id,IPC_RMID, 0);
+    msgctl(msg_id,IPC_RMID,NULL);
     TEST_ERROR;
     
     //uccisione processi

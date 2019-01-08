@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -105,6 +106,11 @@ int main(){                 //codice del gestore
     shm_id = shmget(IPC_KEY,SHM_SIZE,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
 
+    if(sem_id==-1 || msg_id==-1 || shm_id==-1){
+        printf("Gestore (PID: %d). Errore nella creazione delle IPCS\n",getpid());
+        exit(EXIT_FAILURE);
+    }
+
     //acquisizione indirizzo memoria condivisa
     struct info_sim *shared;
     shared = shmat(shm_id,NULL,0);
@@ -154,10 +160,17 @@ int main(){                 //codice del gestore
     memset(SO,-1,sizeof(SO));
 
     for(i=0;i<POP_SIZE;i++){
+ 
         struct info_student stud = shared->student[i];      //contiene la struttura dello studente in posizione i
         struct info_group *grp = shared->group[stud.group];      //contiene il gruppo dello studente stud
-        int voto_SO = grp->max_voto;     //massimo voto che lo studente i puo' prendere
-
+#ifdef DEBUG
+        printf("grp: %p\n", grp);
+#endif
+        //DOVE DA' IL SEGMENTATION FAULT
+        //      |
+        //      v
+        //int voto_SO = grp->max_voto;     //massimo voto che lo studente i puo' prendere
+/*
         if(!grp->is_closed) //azzera il voto se il gruppo non e' chiuso
             voto_SO = 0;
         else if(stud.nof_elems != grp->n_members)    //sottrae 3 se non e' stata rispettata la preferenza
@@ -173,6 +186,7 @@ int main(){                 //codice del gestore
         sprintf(message.text,"%d",voto_SO);
         msgsnd(msg_id,&message,sizeof(message),0);
         TEST_ERROR;
+        */
     }
 
     //stampa dei dati della simulazione
@@ -182,10 +196,10 @@ int main(){                 //codice del gestore
     print_data(SO,POP_SIZE);
 
     //rimozione ipc
-    semctl(sem_id, IPC_RMID, 0);
+    semctl(sem_id,0,IPC_RMID);      // *** non so perche' dia INTERRUPTED SYSTEM CALL ***
     TEST_ERROR;
-    shmctl(shm_id, IPC_RMID, 0);
+    shmctl(shm_id,IPC_RMID,NULL);
     TEST_ERROR;
-    msgctl(msg_id, IPC_RMID, 0);
+    msgctl(msg_id,IPC_RMID,NULL);
     TEST_ERROR;
 } 
