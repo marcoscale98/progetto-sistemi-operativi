@@ -65,6 +65,8 @@ int main(int argc,char *argv[]){
     //set handler
     sa_sigusr1();
     TEST_ERROR;
+    sa_sigsegv(); //può capitare il segmentation fault nello student
+    TEST_ERROR;
 
     //INIZIALIZZAZIONE IPC
     int sem_id, shm_id;
@@ -84,13 +86,14 @@ int main(int argc,char *argv[]){
     aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
     TEST_ERROR;
     student = &(aula->student[matricola]);
-    my_group = aula->group[matricola];   
+    my_group = *(aula->group)+sizeof(struct info_group *)*matricola; //prove
     //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
     
 #ifdef DEBUG
-    printf("_Student (PID: %d). Memoria condivisa inizializzata\n",getpid());
-    printf("Indirizzo di memoria condivisa di student: %p\n", student);
-    printf("Indirizzo di memoria condivisa di my_group: %p\n", my_group);
+    printf("_Student (PID: %d). Memoria condivisa inizializzata\n"\
+	   "Indirizzo di memoria condivisa di student: %p\n"\
+	   "Indirizzo di memoria condivisa di my_group: %p\n",\
+	   getpid(), student, my_group);
 #endif
 
     //INIZIALIZZAZIONE VARIABILI STUDENTE    
@@ -127,7 +130,6 @@ int main(int argc,char *argv[]){
     printf("_Student (PID: %d). nof_elems determinato\n",getpid());
 #endif  
     //INIZIALIZZAZIONE VARIABILI MIO GRUPPO (per ora ci sono solo io)
-    //struct info_group my_group;
     
 
     /*************************************************************************
@@ -154,25 +156,20 @@ int main(int argc,char *argv[]){
     printf("_Student (PID: %d). student inizializzato\n",getpid());
 #endif
 
-/*  //INIZIALIZZAZIONE MEMORIA CONDIVISA
-    struct info_sim *aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
-    aula->student[student->matricola] = student;
-    aula->group[student->matricola] = my_group;
-    //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
-*/ 
 
-/*
 #ifdef DEBUG
-    printf("PID: %d\nstudent->matricola: %d\n", getpid(),student->matricola);
-    printf("prob_2: %f\n", prob_2);
-    printf("prob_3: %f\n", prob_3);
-    printf("nof_invites: %d\n", nof_invites);
-    printf("max_reject: %d\n", max_reject);
-    printf("student->group: %d\n", student->group);
-    printf("student->voto_AdE: %d\n", student->voto_AdE);
-    printf("student->nof_elems: %d\n", student->nof_elems);
+    printf("_Student (PID: %d).\n_student->matricola: %d\n"\
+				"_prob_2: %f\n"\
+				"_prob_3: %f\n"\
+				"_nof_invites: %d\n"\
+				"_max_reject: %d\n"\
+				"_student->group: %d\n"\
+				"_student->voto_AdE: %d\n"\
+				"_student->nof_elems: %d\n",\
+    getpid(),student->matricola, prob_2, prob_3, nof_invites, max_reject, student->group,\
+    student->voto_AdE, student->nof_elems);
 #endif
-*/     
+   
 #ifdef DEBUG
     printf("_Student (PID: %d). Effettuo reserve_sem\n",getpid());
 #endif 
@@ -321,6 +318,7 @@ int chiudo_gruppo() {
 	my_group->is_closed=TRUE;
 	student->leader=TRUE;
     }
+    //se è già chiuso il gruppo, non si fa nulla
     return my_group->is_closed;
 }
 
