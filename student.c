@@ -101,8 +101,7 @@ int main(int argc,char *argv[]){
         max_reject = atoi(argv[5]);
         
     student->matricola = atoi(argv[1]);
-    //ogni studente inizialmente fa parte di un gruppo in cui e' da solo
-    student->group = matricola;
+    student->group = NOGROUP;
     student->leader=FALSE;
     
 #ifdef DEBUG
@@ -127,12 +126,12 @@ int main(int argc,char *argv[]){
 #ifdef DEBUG
     printf("_Student (PID: %d). nof_elems determinato\n",getpid());
 #endif  
-    //INIZIALIZZAZIONE VARIABILI MIO GRUPPO (per ora ci sono solo io)
-    //inizialmente tutti gli studenti fanno parte di un "gruppo" in cui sono da soli
-    my_group->n_members=1;
+    //INIZIALIZZAZIONE VARIABILI GRUPPO
+    //inizialmente uno studente non fa parte di nessun gruppo
+    my_group->n_members=0;
     my_group->is_closed=FALSE;
-    my_group->pref_nof_elems=student->nof_elems;
-    my_group->max_voto=student->voto_AdE;
+    my_group->pref_nof_elems=0;
+    my_group->max_voto=0;
 
 #ifdef DEBUG
     printf("_Student (PID: %d).Student inizializzato\n"\
@@ -250,10 +249,8 @@ int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject) {
 	else {  //valuto se accettare o meno
 	    /* accetta se non hai più rifiuti a disposizione */
 	    if(*n_rifiutati==max_reject || \
-	     \
-	    (aula->group[mittente].max_voto >= student->voto_AdE && aula->student[mittente].nof_elems == student->nof_elems) || \
-	     \
-	    (aula->time_left<=CRITIC_TIME && aula->student[mittente].nof_elems==student->nof_elems)) {
+	    /* se il mittente ha lo stesso nof_elems */ \
+	    ((aula->student[mittente].group==NOGROUP || aula->group[mittente].n_members>1) && aula->student[mittente].nof_elems == student->nof_elems)) {
 	        accetta_invito(mittente);
 		*accettato=TRUE;
 	    }
@@ -277,7 +274,7 @@ void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
     for(i=0; i<POP_SIZE; i++) {
         stud2 = &(aula->student[i]);
         
-        //se sono dello stesso turno e non hanno un gruppo (imprescindibile per un invito)
+        //se sono dello stesso turno, non hanno un gruppo e ho ancora inviti a disposizione (imprescindibile per un invito)
         if(stesso_turno(stud2, student) && stud2->group==NOGROUP && *n_invitati<nof_invites) {
             
             //se hanno la stessa preferenza di nof_elems
@@ -321,15 +318,22 @@ int chiudo_gruppo() {
 
 void inserisci_nel_mio_gruppo(int matricola) {
     
-    if(my_group->n_members<4) {
+    if(my_group->n_members<=1){ //non esiste ancora il gruppo
+	//creo gruppo
+	my_group->n_members=2;
+	my_group->max_voto=max(student->voto_AdE, aula->student[matricola].voto_AdE);
+	//modifico mie variabili studente
+	student->group=student->matricola;
+	student->leader=TRUE;
+	//modifico variabili altro student
+	aula->student[matricola].group=student->matricola;
+    }
+    else if(my_group->n_members<4) {
 	//modifichiamo i campi dello studente "matricola"
 	aula->student[matricola].group = student->group;
-	aula->group[matricola].n_members=0; //non esiste più il precedente gruppo
 	//modifico i campi del gruppo
 	my_group->n_members += 1;
-	my_group->max_voto = max(student->voto_AdE, aula->student[matricola].voto_AdE);
-	//modifico il campo di student
-	student->leader=TRUE;
+	my_group->max_voto = max(my_group->max_voto, aula->student[matricola].voto_AdE);
     } else {
 	fprintf(stderr, "%s: %d. Il gruppo non può essere formato da più di 4 studenti #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
 	exit(EXIT_FAILURE);
