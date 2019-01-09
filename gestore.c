@@ -73,6 +73,37 @@ int main(){                 //codice del gestore
     sprintf(max_reject,"%d",options.max_reject);
     char *args[] = {"student",matricola,prob_2,prob_3,nof_invites,max_reject,NULL};
 
+    //creazione ipc
+    int sem_id, shm_id, msg_id;
+    sem_id = semget(IPC_KEY,N_SEM,IPC_CREAT|IPC_EXCL|0666);
+    TEST_ERROR;
+    msg_id = msgget(IPC_KEY, IPC_CREAT|IPC_EXCL|0666);
+    TEST_ERROR;
+    shm_id = shmget(IPC_KEY,SHM_SIZE,IPC_CREAT|IPC_EXCL|0666);
+    TEST_ERROR;
+
+    if(sem_id==-1 || msg_id==-1 || shm_id==-1){
+        printf("Gestore (PID: %d). Errore nella creazione delle IPCS\n",getpid());
+        exit(EXIT_FAILURE);
+    }
+
+    //acquisizione indirizzo memoria condivisa
+    struct info_sim *shared;
+    shared = shmat(shm_id,NULL,0);
+    TEST_ERROR;
+
+
+    //inizializzazione del semaforo di scrittura
+    init_sem_available(sem_id,SEM_SHM);
+    TEST_ERROR;
+    //semaforo SEM_READY inizializzato a 0
+    init_sem_in_use(sem_id,SEM_READY);
+    TEST_ERROR;
+
+#ifdef DEBUG
+    printf("_Gestore (PID: %d). Create ipc e inizializzate\n",getpid());
+#endif
+
     //creazione dei figli
     int i, value; 
     for(i=0, value=-1;value && i<POP_SIZE;i++){
@@ -97,35 +128,7 @@ int main(){                 //codice del gestore
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Creati figli\n",getpid());
 #endif
-    //creazione ipc
-    int sem_id, shm_id, msg_id;
-    sem_id = semget(IPC_KEY,N_SEM,IPC_CREAT|IPC_EXCL|0666);
-    TEST_ERROR;
-    msg_id = msgget(IPC_KEY, IPC_CREAT|IPC_EXCL|0666);
-    TEST_ERROR;
-    shm_id = shmget(IPC_KEY,SHM_SIZE,IPC_CREAT|IPC_EXCL|0666);
-    TEST_ERROR;
 
-    if(sem_id==-1 || msg_id==-1 || shm_id==-1){
-        printf("Gestore (PID: %d). Errore nella creazione delle IPCS\n",getpid());
-        exit(EXIT_FAILURE);
-    }
-
-    //acquisizione indirizzo memoria condivisa
-    struct info_sim *shared;
-    shared = shmat(shm_id,NULL,0);
-    TEST_ERROR;
-
-#ifdef DEBUG
-    printf("_Gestore (PID: %d). Create ipc\n",getpid());
-#endif
-
-    //inizializzazione del semaforo di scrittura
-    init_sem_in_use(sem_id,SEM_SHM);
-    TEST_ERROR;
-    //semaforo SEM_READY inizializzato a 0
-    init_sem_in_use(sem_id,SEM_READY);
-    TEST_ERROR;
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Aspetto l'inizializzazione degli student\n",getpid());
 #endif
@@ -164,7 +167,7 @@ int main(){                 //codice del gestore
         struct info_student stud = shared->student[i];      //contiene la struttura dello studente in posizione i
         struct info_group grp = shared->group[stud.group];      //contiene il gruppo dello studente stud
 #ifdef DEBUG
-        printf("grp: %p\n", grp);
+        printf("indirizzo di grp: %p\n", &grp);
 #endif
         //DOVE DA' IL SEGMENTATION FAULT
         //      |
