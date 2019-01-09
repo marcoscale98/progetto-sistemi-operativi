@@ -14,8 +14,6 @@
 #include "header/sem_util.h"
 #include "header/stud.h"
 
-#define ARRAY_LEN 10
-
 struct info_student *student;
 struct info_group *my_group;
 struct info_sim *aula;
@@ -86,7 +84,7 @@ int main(int argc,char *argv[]){
     aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
     TEST_ERROR;
     student = &(aula->student[matricola]);
-    my_group = *(aula->group)+sizeof(struct info_group *)*matricola; //prove
+    my_group = &(aula->group[matricola]);
     //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
     
 #ifdef DEBUG
@@ -130,44 +128,29 @@ int main(int argc,char *argv[]){
     printf("_Student (PID: %d). nof_elems determinato\n",getpid());
 #endif  
     //INIZIALIZZAZIONE VARIABILI MIO GRUPPO (per ora ci sono solo io)
-    
-
-    /*************************************************************************
-     *
-     *  C'E' UN PROBLEMA IN QUESTA PARTE COMMENTATA, BLOCCA I PROCESSI STUDENT:
-     *
-     *  anche mettendo soltanto la riga 139 si blocca: c'e' un problema con my_group,
-     *  ed e' anche perche' il gestore da SEGMENTATION FAULT (l'ho lasciato così
-     *  si vede dove al gestore da' grp=NULL)
-     *
-     *************************************************************************
-
+    //inizialmente tutti gli studenti fanno parte di un "gruppo" in cui sono da soli
     my_group->n_members=1;
     my_group->is_closed=FALSE;
     my_group->pref_nof_elems=student->nof_elems;
     my_group->max_voto=student->voto_AdE;
-    
-    *
-    *
-    */
-
 
 #ifdef DEBUG
-    printf("_Student (PID: %d). student inizializzato\n",getpid());
-#endif
-
-
-#ifdef DEBUG
-    printf("_Student (PID: %d).\n_student->matricola: %d\n"\
+    printf("_Student (PID: %d).Student inizializzato\n"\
+				"_student->matricola: %d\n"\
 				"_prob_2: %f\n"\
 				"_prob_3: %f\n"\
 				"_nof_invites: %d\n"\
 				"_max_reject: %d\n"\
 				"_student->group: %d\n"\
 				"_student->voto_AdE: %d\n"\
-				"_student->nof_elems: %d\n",\
-    getpid(),student->matricola, prob_2, prob_3, nof_invites, max_reject, student->group,\
-    student->voto_AdE, student->nof_elems);
+				"_student->nof_elems: %d\n"\
+				"_my_group->n_members: %d\n"\
+				"_my_group->is_closed: %d \n"\
+				"_my_group->pref_nof_elems: %d\n"\
+				"_my_group->max_voto: %d\n",
+				
+    getpid(),student->matricola, prob_2, prob_3, nof_invites, max_reject, student->group,
+    student->voto_AdE, student->nof_elems, my_group->n_members, my_group->is_closed, my_group->pref_nof_elems, my_group->max_voto);
 #endif
    
 #ifdef DEBUG
@@ -256,13 +239,15 @@ int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject) {
 	    rifiuta_invito(mittente, n_rifiutati);
 	    
 	else {  //valuto se accettare o meno
+	    /* accetta se non hai più rifiuti a disposizione */
 	    if(*n_rifiutati==max_reject || \
-	    (aula->group[mittente]->max_voto >= student->voto_AdE && aula->student[mittente].nof_elems == student->nof_elems) || \
-	    (aula->time_left<=CRITIC_TIME && aula->student[mittente].nof_elems==student->nof_elems) {
+	     \
+	    (aula->group[mittente].max_voto >= student->voto_AdE && aula->student[mittente].nof_elems == student->nof_elems) || \
+	     \
+	    (aula->time_left<=CRITIC_TIME && aula->student[mittente].nof_elems==student->nof_elems)) {
 	        accetta_invito(mittente);
 		*accettato=TRUE;
 	    }
-	    else if(
 	    else
 		rifiuta_invito(mittente, n_rifiutati);
 	}
@@ -330,7 +315,7 @@ void inserisci_nel_mio_gruppo(int matricola) {
     if(my_group->n_members<4) {
 	//modifichiamo i campi dello studente "matricola"
 	aula->student[matricola].group = student->group;
-	aula->group[matricola]=NULL; //non esiste più il precedente gruppo
+	aula->group[matricola].n_members=0; //non esiste più il precedente gruppo
 	//modifico i campi del gruppo
 	my_group->n_members += 1;
 	my_group->max_voto = max(student->voto_AdE, aula->student[matricola].voto_AdE);

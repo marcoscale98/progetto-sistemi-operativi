@@ -162,7 +162,7 @@ int main(){                 //codice del gestore
     for(i=0;i<POP_SIZE;i++){
  
         struct info_student stud = shared->student[i];      //contiene la struttura dello studente in posizione i
-        struct info_group *grp = shared->group[stud.group];      //contiene il gruppo dello studente stud
+        struct info_group grp = shared->group[stud.group];      //contiene il gruppo dello studente stud
 #ifdef DEBUG
         printf("grp: %p\n", grp);
 #endif
