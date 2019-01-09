@@ -224,10 +224,11 @@ int controllo_risposte(int *invitati, int n_invitati) {
 	    inserisci_nel_mio_gruppo(mittente);
 	    setta_risposta(mittente, invitati, n_invitati);
 	    #ifdef DEBUG
-		printf("Informazioni aggiornate gruppo %d\n", student->group);
-		printf("n_members: %d\n", my_group->n_members);
-		printf("is_closed: %d\n", my_group->is_closed);
-		printf("max_voto: %d\n\n", my_group->max_voto);
+		printf("Informazioni aggiornate gruppo n. %d\n"\
+		       "n_members: %d\n"\
+		       "is_closed: %d\n"\
+		       "max_voto: %d\n\n",\
+		       student->group,my_group->n_members, my_group->is_closed, my_group->max_voto);
 	    #endif
 	}
 	else if(strcmp("Rifiuto",messaggio)==0){
@@ -255,10 +256,13 @@ int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject) {
 	    rifiuta_invito(mittente, n_rifiutati);
 	    
 	else {  //valuto se accettare o meno
-	    if(*n_rifiutati==max_reject || (aula->group[mittente]->max_voto >= student->voto_AdE && aula->group[mittente]->n_members <= student->nof_elems-1)) {
+	    if(*n_rifiutati==max_reject || \
+	    (aula->group[mittente]->max_voto >= student->voto_AdE && aula->student[mittente].nof_elems == student->nof_elems) || \
+	    (aula->time_left<=CRITIC_TIME && aula->student[mittente].nof_elems==student->nof_elems) {
 	        accetta_invito(mittente);
 		*accettato=TRUE;
 	    }
+	    else if(
 	    else
 		rifiuta_invito(mittente, n_rifiutati);
 	}
@@ -271,7 +275,6 @@ int max(int num1, int num2) {
         return num1;
     else
 	return num2;
-    
 }
 
 void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
@@ -313,7 +316,7 @@ int stesso_turno (struct info_student *mat1, struct info_student *mat2) {
 //decido se conviene chiudere il gruppo(return true) oppure no(return false)
 int chiudo_gruppo() {
     
-    if(my_group->n_members==4 || my_group->n_members==student->nof_elems || aula->time_left <= (0.5*POP_SIZE)) {
+    if(my_group->n_members==4 || my_group->n_members==student->nof_elems || aula->time_left <= (CRITIC_TIME)) {
 	//chiudo il gruppo (anche se manca poco tempo)
 	my_group->is_closed=TRUE;
 	student->leader=TRUE;

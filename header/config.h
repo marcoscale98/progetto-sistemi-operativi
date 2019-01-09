@@ -6,6 +6,7 @@
 #define FALSE 0
 #define ARG_SIZE 32
 #define IPC_KEY ftok("opt.conf",0)
+#define CRITIC_TIME (0.5*POP_SIZE)
 
 //definire soltanto se si vuole che si stampino dei check
 #define DEBUG
