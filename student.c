@@ -250,9 +250,22 @@ int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject) {
 	    /* accetta se non hai più rifiuti a disposizione */
 	    if(*n_rifiutati==max_reject || \
 	    /* se il mittente ha lo stesso nof_elems */ \
-	    ((aula->student[mittente].group==NOGROUP || aula->group[mittente].n_members>1) && aula->student[mittente].nof_elems == student->nof_elems)) {
-	        accetta_invito(mittente);
+	    aula->student[mittente].nof_elems == student->nof_elems) {
+		accetta_invito(mittente);
 		*accettato=TRUE;
+	    }
+	    /* se siamo nel CRITICE_TIME, allora posso accettare anche inviti con studenti che non hanno lo stesso nof_elem a patto che il loro voto sia più alto del mio di 3 punti */
+	    else if(aula->time_left < CRITIC_TIME) {
+		if(aula->student[mittente].group==NOGROUP && aula->student[mittente].voto_AdE-3 >= student->voto_AdE) {
+		    accetta_invito(mittente);
+		    *accettato=TRUE;
+		}
+		else if(aula->group[mittente].n_members>1 && aula->group[mittente].max_voto-3 >= student->voto_AdE) {
+		    accetta_invito(mittente);
+		    *accettato=TRUE;
+		}
+		else
+		    rifiuta_invito(mittente, n_rifiutati);
 	    }
 	    else
 		rifiuta_invito(mittente, n_rifiutati);
