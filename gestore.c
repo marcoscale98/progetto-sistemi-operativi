@@ -169,19 +169,18 @@ int main(){                 //codice del gestore
 #ifdef DEBUG
         printf("indirizzo di grp: %p\n", &grp);
 #endif
-        //DOVE DA' IL SEGMENTATION FAULT
-        //      |
-        //      v
-        //int voto_SO = grp->max_voto;     //massimo voto che lo studente i puo' prendere
-/*
-        if(!grp->is_closed) //azzera il voto se il gruppo non e' chiuso
+        int voto_SO = grp.max_voto;     //massimo voto che lo studente i puo' prendere
+
+        if(!grp.is_closed) //azzera il voto se il gruppo non e' chiuso
             voto_SO = 0;
-        else if(stud.nof_elems != grp->n_members)    //sottrae 3 se non e' stata rispettata la preferenza
+        else if(stud.nof_elems != grp.n_members)    //sottrae 3 se non e' stata rispettata la preferenza
             voto_SO-=3;
 
         //aggiornamento dei dati
         AdE[i]=stud.voto_AdE;
         SO[i]=voto_SO;
+        
+        //pulizia della coda dei messaggi
 
         //invio del messaggio allo studente con il suo voto
         struct msgbuf message;
@@ -189,7 +188,6 @@ int main(){                 //codice del gestore
         sprintf(message.text,"%d",voto_SO);
         msgsnd(msg_id,&message,sizeof(message),0);
         TEST_ERROR;
-        */
     }
 
     //stampa dei dati della simulazione
