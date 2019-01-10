@@ -170,7 +170,7 @@ int main(int argc,char *argv[]){
     
 /***********************************************************************
  * 
- * GLI STUDENTI NON ENTRANO NEL WHILE...NON SO PERCHE
+ * GLI STUDENTI RIMANGONO BLOCCATI NEL WHILE
  * 
  * ********************************************************************/
 #ifdef DEBUG

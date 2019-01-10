@@ -91,9 +91,7 @@ int main(){                 //codice del gestore
     struct info_sim *shared;
     shared = shmat(shm_id,NULL,0);
     TEST_ERROR;
-    //inizializzazione tempo ì
-    shared->time_left = sim_time;
-
+    
     //inizializzazione del semaforo di scrittura
     init_sem_available(sem_id,SEM_SHM);
     TEST_ERROR;
@@ -161,6 +159,7 @@ int main(){                 //codice del gestore
             release_sem(sem_id,SEM_SHM);
         }
     } //allo scattare del timer verrà invocato l'handler
+    shared->time_left = 0;
 
     //pulizia della coda dei messaggi
         struct msgbuf message;
