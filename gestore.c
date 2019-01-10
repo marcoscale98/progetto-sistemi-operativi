@@ -91,7 +91,8 @@ int main(){                 //codice del gestore
     struct info_sim *shared;
     shared = shmat(shm_id,NULL,0);
     TEST_ERROR;
-
+    //inizializzazione tempo ì
+    shared->time_left = sim_time;
 
     //inizializzazione del semaforo di scrittura
     init_sem_available(sem_id,SEM_SHM);
@@ -155,11 +156,15 @@ int main(){                 //codice del gestore
             reserve_sem(sem_id,SEM_SHM);
             shared->time_left = timer;
             #ifdef DEBUG
-                printf("Gestore (PID: %d): Tempo rimanente= %d secondi.\n", getpid(), timer);
+                printf("_Gestore (PID: %d): Tempo rimanente= %d secondi.\n", getpid(), timer);
             #endif
             release_sem(sem_id,SEM_SHM);
         }
     } //allo scattare del timer verrà invocato l'handler
+
+    //pulizia della coda dei messaggi
+        struct msgbuf message;
+        while(msgrcv(msg_id,&message,sizeof(message.text),0,IPC_NOWAIT)!=-1);
     
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Calcolo dei voti\n",getpid());
@@ -170,9 +175,12 @@ int main(){                 //codice del gestore
     memset(SO,-1,sizeof(SO));
 
     for(i=0;i<POP_SIZE;i++){
- 
-        struct info_student stud = shared->student[i];      //contiene la struttura dello studente in posizione i
-        struct info_group grp = shared->group[stud.group];      //contiene il gruppo dello studente stud
+        //contiene la struttura dello studente in posizione i
+        struct info_student stud = shared->student[i];
+        //contiene il gruppo dello studente stud
+        struct info_group grp;
+        if(stud.group != NOGROUP)
+            grp = shared->group[stud.group];
 #ifdef DEBUG
         printf("indirizzo di grp: %p\n", &grp);
 #endif
@@ -186,14 +194,11 @@ int main(){                 //codice del gestore
         //aggiornamento dei dati
         AdE[i]=stud.voto_AdE;
         SO[i]=voto_SO;
-        
-        //pulizia della coda dei messaggi
 
         //invio del messaggio allo studente con il suo voto
-        struct msgbuf message;
         message.mtype = stud.matricola;
         sprintf(message.text,"%d",voto_SO);
-        msgsnd(msg_id,&message,sizeof(message),0);
+        msgsnd(msg_id,&message,sizeof(message.text),0);
         TEST_ERROR;
     }
 
@@ -202,6 +207,10 @@ int main(){                 //codice del gestore
     print_data(AdE,POP_SIZE);
     printf("Gestore (PID: %d). Dati dei voti di Sistemi Operativi\n",getpid());
     print_data(SO,POP_SIZE);
+
+    //detach memoria condivisa
+    shmdt(shared);
+    TEST_ERROR;
 
     //rimozione ipc
     semctl(sem_id,0,IPC_RMID);      // *** non so perche' dia INTERRUPTED SYSTEM CALL ***
