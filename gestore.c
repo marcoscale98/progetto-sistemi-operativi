@@ -140,8 +140,8 @@ int main(){                 //codice del gestore
 
     //set del timer e inizio simulazione
     set_timer(options.sim_time);
-    //bisogna inizializzare shared->time_left a sim_time
-    printf("Gestore (PID: %d). Inizio simulazione\n",getpid());
+    shared->time_left = options.sim_time;
+    printf("Gestore (PID: %d). Timer inizializzato e inizio simulazione\n",getpid());
 
     //sblocco degli studenti
     init_sem(sem_id,SEM_READY,POP_SIZE);
