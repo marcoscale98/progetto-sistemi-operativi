@@ -101,7 +101,10 @@ int main(){                 //codice del gestore
     TEST_ERROR;
 
 #ifdef DEBUG
-    printf("_Gestore (PID: %d). Create ipc e inizializzate\n",getpid());
+    printf("_Gestore (PID: %d). Create ipc e inizializzate\n"\
+           "Valore del SEM_SHM: %d\n"\
+           "Valore del SEM_READY: %d\n",
+           getpid(), get_sem_val(sem_id, SEM_SHM), get_sem_val(sem_id, SEM_READY));
 #endif
 
     //creazione dei figli
@@ -130,30 +133,34 @@ int main(){                 //codice del gestore
 #endif
 
 #ifdef DEBUG
-    printf("_Gestore (PID: %d). Aspetto l'inizializzazione degli student\n",getpid());
+    printf("_Gestore (PID: %d). Aspetto l'inizializzazione degli studenti\n",getpid());
 #endif
     //attesa dell'inizializzazione degli studenti
     while(get_sem_val(sem_id,SEM_READY)!=-POP_SIZE);
-#ifdef DEBUG
-    printf("_Gestore (PID: %d). Ora sblocco gli studenti\n",getpid());
-#endif
+
+    //set del timer e inizio simulazione
+    set_timer(options.sim_time);
+    //bisogna inizializzare shared->time_left a sim_time
+    printf("Gestore (PID: %d). Inizio simulazione\n",getpid());
+
     //sblocco degli studenti
     init_sem(sem_id,SEM_READY,POP_SIZE);
 #ifdef DEBUG
     printf("Gestore (PID: %d). Studenti sbloccati\n",getpid());
 #endif
-
-    //set del timer e inizio simulazione
-    set_timer(options.sim_time);
-    printf("Gestore (PID: %d). Inizio simulazione\n",getpid());
+    
     int timer;
     while((timer = time_left())>0){
         if(timer%5 == 0){       //aggiornamento del tempo rimanente ogni 5 secondi
             reserve_sem(sem_id,SEM_SHM);
             shared->time_left = timer;
+            #ifdef DEBUG
+                printf("Gestore (PID: %d): Tempo rimanente= %d secondi.\n", getpid(), timer);
+            #endif
             release_sem(sem_id,SEM_SHM);
         }
     } //allo scattare del timer verrà invocato l'handler
+    
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Calcolo dei voti\n",getpid());
 #endif

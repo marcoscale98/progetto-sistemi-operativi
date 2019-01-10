@@ -173,7 +173,10 @@ int main(int argc,char *argv[]){
  * GLI STUDENTI NON ENTRANO NEL WHILE...NON SO PERCHE
  * 
  * ********************************************************************/
-    
+#ifdef DEBUG
+    printf("Valore di aula->time_left: %d\n", aula->time_left);
+#endif
+
     //STRATEGIA INVITI
     while(aula->time_left > 0) {
         reserve_sem(sem_id, SEM_SHM);
