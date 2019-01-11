@@ -24,7 +24,7 @@ void handler_sigusr1(int sig){
     printf("Student (PID: %d). Bloccato. Aspetto il voto\n",getpid());
     int msg_id;
     msg_id = msgget(IPC_KEY,0666);
-    TEST_ERROR;
+    //TEST_ERROR;
 
     struct msgbuf message;
     msgrcv(msg_id,&message,sizeof(message.text),student->matricola,0);

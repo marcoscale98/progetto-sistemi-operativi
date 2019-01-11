@@ -52,7 +52,7 @@ void handler_sigalrm(int sig){
     killpg(0,SIGUSR1);
     TEST_ERROR;
 }
-
+/*
 //handler per SIGUSR1: per processi studente
 void handler_sigusr1(int sig){
     printf("Student (PID: %d). Bloccato! Aspetto il voto\n",getpid());
@@ -64,6 +64,7 @@ int sa_sigusr1(){
     sa.sa_handler = handler_sigusr1;
     return sigaction(SIGUSR1,&sa,NULL);
 }
+*/
 
 //funzione richiamata per impostare l'handler di SIGINT
 int sa_sigint(){

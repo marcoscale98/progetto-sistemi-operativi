@@ -1,7 +1,7 @@
 #ifndef _TIME_UTIL_H_
 #define _TIME_UTIL_H_
 
-#define NEW_TIMER
+//#define NEW_TIMER
 
 #ifdef NEW_TIMER
 

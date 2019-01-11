@@ -32,7 +32,7 @@ void print_array(int *a, int sz){
 // stampa per ogni voto il numero di studenti che ha tale voto
 void print_data(int array[], int size){
     if(array && size>0){
-        print_array(array,size);
+        //print_array(array,size);
         printf("VOTO\tFREQUENZA\n");
 
         int v, i,cnt;
@@ -136,25 +136,20 @@ int main(){                 //codice del gestore
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Studenti sbloccati\n",getpid());
 #endif
-    
-    int timer;
-    //(timer = time_left())>0
-    while(1){
-        timer = time_left();
-        if(timer==0)
-            break;
-        else if(timer%5 == 0){       //aggiornamento del tempo rimanente ogni 5 secondi
-            shared->time_left = timer;
-            #ifdef DEBUG
-                printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), timer);
-            #endif
-        }
+    //ciclo di aggiornamento time_left
+    while(time_left()>0){
+        shared->time_left = time_left();
+    #ifdef DEBUG
+        printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), time_left());
+    #endif
+        sleep(5);
     } //allo scattare del timer verrà invocato l'handler
     shared->time_left = 0;
 
     //pulizia della coda dei messaggi
     struct msgbuf message;
     while(msgrcv(msg_id,&message,sizeof(message.text),0,IPC_NOWAIT)!=-1);
+    TEST_ERROR;
     
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Calcolo dei voti\n",getpid());
@@ -206,7 +201,7 @@ int main(){                 //codice del gestore
     TEST_ERROR;
 
     //rimozione ipc
-    semctl(sem_id,0,IPC_RMID);      // *** non so perche' dia INTERRUPTED SYSTEM CALL ***
+    semctl(sem_id,0,IPC_RMID);
     TEST_ERROR;
     shmctl(shm_id,IPC_RMID,NULL);
     TEST_ERROR;

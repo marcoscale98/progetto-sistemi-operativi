@@ -1,5 +1,6 @@
 #include <time.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
@@ -82,7 +83,7 @@ int main(int argc, char* argv[]){
         exit(EXIT_FAILURE);
     }
 
-    timer_t timer;
+    timer_t *timer;
 
     //set del handler
     struct sigaction sa;
