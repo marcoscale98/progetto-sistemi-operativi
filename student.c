@@ -180,9 +180,9 @@ int main(int argc,char *argv[]){
     //STRATEGIA INVITI
     while(aula->time_left > 0) {
         reserve_sem(sem_id, SEM_SHM);
-	#ifdef DEBUG
-	    printf("Student (PID: %d) può mandare gli inviti", getpid());
-	#endif
+	//#ifdef DEBUG
+	    //printf("Student (PID: %d) può mandare gli inviti\n", getpid());
+	//#endif
 	if (controllo_risposte(invitati, n_invitati)) {//se tutti hanno risposto
 	    //se leader true rifiuta gli inviti
 	    //se ho già accettato un invito, rifiuto i successivi
@@ -193,9 +193,9 @@ int main(int argc,char *argv[]){
 		mando_inviti(invitati, &n_invitati, nof_invites);
 	    }
 	}
-	#ifdef DEBUG
-	    printf("Student (PID: %d) ha finito il suo giro di inviti", getpid());
-	#endif
+	//#ifdef DEBUG
+	    //printf("Student (PID: %d) ha finito il suo giro di inviti\n", getpid());
+	//#endif
 	release_sem(sem_id, SEM_SHM);
     } 
  
