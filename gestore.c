@@ -165,7 +165,7 @@ int main(){                 //codice del gestore
             reserve_sem(sem_id,SEM_SHM);
             shared->time_left = timer;
             #ifdef DEBUG
-                printf("_Gestore (PID: %d): Tempo rimanente= %d secondi.\n", getpid(), timer);
+                printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), timer);
             #endif
             release_sem(sem_id,SEM_SHM);
         }

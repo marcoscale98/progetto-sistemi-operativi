@@ -50,7 +50,7 @@ int main(int argc,char *argv[]){
         printf("Numero di argomenti inseriti non corretto\n");
         exit(EXIT_FAILURE);
     }
-
+/*
 #ifdef DEBUG
     printf("_Student (PID: %d). Parametri inizializzati\n",getpid());
     printf("_matricola: %s\n",argv[1]);
@@ -59,7 +59,7 @@ int main(int argc,char *argv[]){
     printf("_nof_invites: %s\n", argv[4]);
     printf("_max_reject: %s\n", argv[5]);
 #endif
-
+*/
     //set handler
     sa_sigusr1();
     TEST_ERROR;
@@ -85,7 +85,6 @@ int main(int argc,char *argv[]){
     TEST_ERROR;
     student = &(aula->student[matricola]);
     my_group = &(aula->group[matricola]);
-    //non c'è bisogno di un semaforo perchè non c'è sovrapposizione delle aree interessate
     
 #ifdef DEBUG
     printf("_Student (PID: %d). Memoria condivisa inizializzata\n"\
@@ -103,17 +102,19 @@ int main(int argc,char *argv[]){
     student->matricola = atoi(argv[1]);
     student->group = NOGROUP;
     student->leader=FALSE;
-    
+ /*   
 #ifdef DEBUG
     printf("_Student (PID: %d). prima parte inizializzazione fatta\n",getpid());
 #endif  
-
+*/
     //inizializzazione voto_AdE
     srand(getpid());
     student->voto_AdE = rand()%13 + 18;  //compreso tra 18 e 30
+    /*
 #ifdef DEBUG
     printf("_Student (PID: %d). voto_AdE determinato\n",getpid());
-#endif  
+#endif
+*/  
     //inizializzazione nof_elems
     int val = rand()%POP_SIZE;
     if(val<POP_SIZE*prob_2)
@@ -122,10 +123,11 @@ int main(int argc,char *argv[]){
         student->nof_elems = 3;
     else //if(val>=popsize*(prob_2+prob_3) && val<popsize)
         student->nof_elems = 4;
-     
+/*     
 #ifdef DEBUG
     printf("_Student (PID: %d). nof_elems determinato\n",getpid());
 #endif  
+* */
     //INIZIALIZZAZIONE VARIABILI GRUPPO
     //inizialmente uno studente non fa parte di nessun gruppo
     my_group->n_members=0;
@@ -134,7 +136,7 @@ int main(int argc,char *argv[]){
     my_group->max_voto=0;
 
 #ifdef DEBUG
-    printf("_Student (PID: %d).Student inizializzato\n"\
+    printf("_Student (PID: %d). Student inizializzato\n"\
 				"_student->matricola: %d\n"\
 				"_prob_2: %f\n"\
 				"_prob_3: %f\n"\
@@ -153,7 +155,7 @@ int main(int argc,char *argv[]){
 #endif
    
 #ifdef DEBUG
-    printf("_Student (PID: %d). Effettuo reserve_sem\n",getpid());
+    printf("_Student (PID: %d). Aspetto l'inizio della simulazione\n",getpid());
 #endif 
     reserve_sem(sem_id, SEM_READY);
     TEST_ERROR;
@@ -201,6 +203,7 @@ int main(int argc,char *argv[]){
  
     //FINE SIMULAZIONE
     sleep(5); //aspetta il voto dal gestore
+    //se passa lo sleep vuol dire che c'è qualcosa che non va
     exit(EXIT_FAILURE);
 }
 
@@ -374,7 +377,7 @@ void invita_studente(int destinatario, int *invitati, int *n_invitati){
         exit(EXIT_FAILURE);
     }
     #ifdef DEBUG
-	printf("Il Mittente : %d ha invitato il Destinatario %d",student->matricola,destinatario);
+	printf("Il Mittente : %d ha invitato il Destinatario %d\n",student->matricola,destinatario);
     #endif
     invitati[*n_invitati] = destinatario;
     *n_invitati +=1;
@@ -400,7 +403,7 @@ void rifiuta_invito(int mittente, int *n_rifiutati){
             }
             TEST_ERROR
 	    #ifdef DEBUG
-		printf("Il Destinatario %d ha rifiutato l'invito del Mittente %d",student->matricola, mittente);
+		printf("Il Destinatario %d ha rifiutato l'invito del Mittente %d\n",student->matricola, mittente);
 	    #endif
             *n_rifiutati +=1;
 
@@ -425,7 +428,7 @@ void accetta_invito(int mittente){ //il destinatario dell'invito è student->mat
             exit(EXIT_FAILURE);
 	}
 	#ifdef DEBUG
-            printf("Il Destinatario : %d ha accettato l'invito del Mittente %d",student->matricola, mittente);
+            printf("Il Destinatario : %d ha accettato l'invito del Mittente %d\n",student->matricola, mittente);
 	#endif
 //	}
 } 
