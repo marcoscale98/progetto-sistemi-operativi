@@ -19,9 +19,20 @@
 #include "header/stud.h"
 
 
+void print_array(int *a, int sz){
+    if(a && sz>0){
+        printf("Stampa array\n");
+        int i;
+        for(i=0;i<sz;i++){
+            printf("array[%d]= %d\n",i,a[i]);
+        }
+    }
+}
+
 // stampa per ogni voto il numero di studenti che ha tale voto
 void print_data(int array[], int size){
     if(array && size>0){
+        print_array(array,size);
         printf("VOTO\tFREQUENZA\n");
 
         int v, i,cnt;
@@ -185,7 +196,7 @@ int main(){                 //codice del gestore
 #endif
         int voto_SO = grp.max_voto;     //massimo voto che lo studente i puo' prendere
 
-        if(!grp.is_closed) //azzera il voto se il gruppo non e' chiuso
+        if(stud.group==NOGROUP || !grp.is_closed) //azzera il voto se il gruppo non e' chiuso
             voto_SO = 0;
         else if(stud.nof_elems != grp.n_members)    //sottrae 3 se non e' stata rispettata la preferenza
             voto_SO-=3;
