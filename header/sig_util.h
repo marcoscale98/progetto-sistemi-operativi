@@ -16,4 +16,19 @@ int sa_sigsegv();
 //funzione richiamata per impostare l'handler di SIGALRM
 int sa_sigalrm();
 
+/*
+// PROVE (NON FUNZIONANO)
+//handler per il gestore: distingue i vari segnali
+void handler_gestore(int sig);
+
+//funzione richiamata per impostare gli handler del gestore
+int sa_gestore();
+
+//handler per il student: distingue i vari segnali
+void handler_student(int sig);
+
+//funzione richiamata per impostare gli handler del gestore
+int sa_student();
+*/
+
 #endif
