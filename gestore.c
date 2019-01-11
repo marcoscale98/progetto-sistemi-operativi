@@ -35,16 +35,18 @@ void print_data(int array[], int size){
         //print_array(array,size);
         printf("VOTO\tFREQUENZA\n");
 
-        int v, i,cnt;
-        for(v=0;v<30;v++){
+        int v, i,cnt, sum;
+        for(v=0,sum=0;v<30;v++){
             for(i=0, cnt=0;i<size;i++){
                 if(v==array[i])
                     cnt++;
             }
             if(cnt>0){
                 printf("%d\t%d\n",v,cnt);
+                sum += cnt*v;
             }
         }
+        printf("VOTO MEDIO = %d\n",sum/POP_SIZE);
     }
 }
 //
