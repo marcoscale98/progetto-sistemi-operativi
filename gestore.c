@@ -19,9 +19,20 @@
 #include "header/stud.h"
 
 
+void print_array(int *a, int sz){
+    if(a && sz>0){
+        printf("Stampa array\n");
+        int i;
+        for(i=0;i<sz;i++){
+            printf("Student[%d]= %d\n",i,a[i]);
+        }
+    }
+}
+
 // stampa per ogni voto il numero di studenti che ha tale voto
 void print_data(int array[], int size){
     if(array && size>0){
+        print_array(array,size);
         printf("VOTO\tFREQUENZA\n");
 
         int v, i,cnt;
@@ -91,8 +102,7 @@ int main(){                 //codice del gestore
     struct info_sim *shared;
     shared = shmat(shm_id,NULL,0);
     TEST_ERROR;
-
-
+    
     //inizializzazione del semaforo di scrittura
     init_sem_available(sem_id,SEM_SHM);
     TEST_ERROR;
@@ -155,11 +165,16 @@ int main(){                 //codice del gestore
             reserve_sem(sem_id,SEM_SHM);
             shared->time_left = timer;
             #ifdef DEBUG
-                printf("Gestore (PID: %d): Tempo rimanente= %d secondi.\n", getpid(), timer);
+                printf("_Gestore (PID: %d): Tempo rimanente= %d secondi.\n", getpid(), timer);
             #endif
             release_sem(sem_id,SEM_SHM);
         }
     } //allo scattare del timer verrà invocato l'handler
+    shared->time_left = 0;
+
+    //pulizia della coda dei messaggi
+        struct msgbuf message;
+        while(msgrcv(msg_id,&message,sizeof(message.text),0,IPC_NOWAIT)!=-1);
     
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Calcolo dei voti\n",getpid());
@@ -170,15 +185,18 @@ int main(){                 //codice del gestore
     memset(SO,-1,sizeof(SO));
 
     for(i=0;i<POP_SIZE;i++){
- 
-        struct info_student stud = shared->student[i];      //contiene la struttura dello studente in posizione i
-        struct info_group grp = shared->group[stud.group];      //contiene il gruppo dello studente stud
+        //contiene la struttura dello studente in posizione i
+        struct info_student stud = shared->student[i];
+        //contiene il gruppo dello studente stud
+        struct info_group grp;
+        if(stud.group != NOGROUP)
+            grp = shared->group[stud.group];
 #ifdef DEBUG
         printf("indirizzo di grp: %p\n", &grp);
 #endif
         int voto_SO = grp.max_voto;     //massimo voto che lo studente i puo' prendere
 
-        if(!grp.is_closed) //azzera il voto se il gruppo non e' chiuso
+        if(stud.group==NOGROUP || !grp.is_closed) //azzera il voto se il gruppo non e' chiuso
             voto_SO = 0;
         else if(stud.nof_elems != grp.n_members)    //sottrae 3 se non e' stata rispettata la preferenza
             voto_SO-=3;
@@ -186,14 +204,11 @@ int main(){                 //codice del gestore
         //aggiornamento dei dati
         AdE[i]=stud.voto_AdE;
         SO[i]=voto_SO;
-        
-        //pulizia della coda dei messaggi
 
         //invio del messaggio allo studente con il suo voto
-        struct msgbuf message;
         message.mtype = stud.matricola;
         sprintf(message.text,"%d",voto_SO);
-        msgsnd(msg_id,&message,sizeof(message),0);
+        msgsnd(msg_id,&message,sizeof(message.text),0);
         TEST_ERROR;
     }
 
@@ -202,6 +217,10 @@ int main(){                 //codice del gestore
     print_data(AdE,POP_SIZE);
     printf("Gestore (PID: %d). Dati dei voti di Sistemi Operativi\n",getpid());
     print_data(SO,POP_SIZE);
+
+    //detach memoria condivisa
+    shmdt(shared);
+    TEST_ERROR;
 
     //rimozione ipc
     semctl(sem_id,0,IPC_RMID);      // *** non so perche' dia INTERRUPTED SYSTEM CALL ***

@@ -170,7 +170,7 @@ int main(int argc,char *argv[]){
     
 /***********************************************************************
  * 
- * GLI STUDENTI NON ENTRANO NEL WHILE...NON SO PERCHE
+ * GLI STUDENTI RIMANGONO BLOCCATI NEL WHILE
  * 
  * ********************************************************************/
 #ifdef DEBUG
@@ -201,6 +201,7 @@ int main(int argc,char *argv[]){
  
     //FINE SIMULAZIONE
     sleep(5); //aspetta il voto dal gestore
+    exit(EXIT_FAILURE);
 }
 
 //controlla se ha ricevuto risposta agli inviti
@@ -244,31 +245,26 @@ int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject) {
     //controlla se ha ricevuto degli inviti
     while(msgrcv(msg_id, &invito,MSG_LEN,student->matricola,IPC_NOWAIT)!=-1){
 	sscanf(invito.text,"%s : %d", messaggio, &mittente);
-	if(student->leader || *accettato || my_group->is_closed) 
+	if(student->leader || *accettato || my_group->is_closed) {
 	    //il leader non può accettare inviti
 	    //se ho già accettato un invito, gli altri li rifiuto
 	    rifiuta_invito(mittente, n_rifiutati);
-	    
+	}
 	else {  //valuto se accettare o meno
 	    /* accetta se non hai più rifiuti a disposizione */
-	    if(*n_rifiutati==max_reject || \
-	    /* se il mittente ha lo stesso nof_elems */ \
-	    aula->student[mittente].nof_elems == student->nof_elems) {
+	    if( (*n_rifiutati==max_reject) || \
+	    
+	    /* oppure se il mittente ha lo stesso nof_elems */
+	    (aula->student[mittente].nof_elems == student->nof_elems) || \
+	    
+	    /* oppure se non ha lo stesso nof_elems, allora posso accettare inviti da studenti con il voto più alto del mio di 3 punti */
+	    (aula->student[mittente].group==NOGROUP && aula->student[mittente].voto_AdE-3 >= student->voto_AdE) || \
+	    (aula->group[mittente].n_members>1 && aula->group[mittente].max_voto-3 >= student->voto_AdE) || \
+	    
+	    /* oppure se siamo nel CRITIC_TIME, allora accetto qualunque invito */
+	    (aula->time_left <= CRITIC_TIME) ) {
 		accetta_invito(mittente);
 		*accettato=TRUE;
-	    }
-	    /* se siamo nel CRITICE_TIME, allora posso accettare anche inviti con studenti che non hanno lo stesso nof_elem a patto che il loro voto sia più alto del mio di 3 punti */
-	    else if(aula->time_left < CRITIC_TIME) {
-		if(aula->student[mittente].group==NOGROUP && aula->student[mittente].voto_AdE-3 >= student->voto_AdE) {
-		    accetta_invito(mittente);
-		    *accettato=TRUE;
-		}
-		else if(aula->group[mittente].n_members>1 && aula->group[mittente].max_voto-3 >= student->voto_AdE) {
-		    accetta_invito(mittente);
-		    *accettato=TRUE;
-		}
-		else
-		    rifiuta_invito(mittente, n_rifiutati);
 	    }
 	    else
 		rifiuta_invito(mittente, n_rifiutati);
@@ -297,17 +293,16 @@ void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
             if(stud2->nof_elems==student->nof_elems) {
                 
                 //se stud2.voto > mio.voto
-                if(stud2->voto_AdE > (student->voto_AdE)) {
+                if(stud2->voto_AdE > (student->voto_AdE))
                     invita_studente(stud2->matricola, invitati, n_invitati);
-                }
-
+		else if(aula->time_left <= CRITIC_TIME)
+		    invita_studente(stud2->matricola, invitati, n_invitati);
             }
-	    //se non hanno la mia stessa preferenza di nof_elems
-	    else {
-		//se stud2.voto > mio.voto-3
-                if(stud2->voto_AdE > (student->voto_AdE-3)) {
-                    invita_studente(stud2->matricola, invitati, n_invitati);
-                }
+	    
+	    //se non hanno la mia stessa preferenza di nof_elems e siamo nel CRITIC TIME
+	    else if(aula->time_left <= CRITIC_TIME) {
+		//invita qualunque studente pur di arrivare al nof_elems
+		invita_studente(stud2->matricola, invitati, n_invitati);
 	    }
         }
     }    
@@ -324,6 +319,15 @@ int stesso_turno (struct info_student *mat1, struct info_student *mat2) {
 int chiudo_gruppo() {
     
     if(my_group->n_members==4 || my_group->n_members==student->nof_elems || aula->time_left <= (CRITIC_TIME)) {
+	if(my_group->n_members<=1) {
+	    //se devo chiudere il gruppo da solo
+	    //creo gruppo
+	    my_group->n_members=1;
+	    my_group->max_voto=student->voto_AdE;
+	    //modifico mie variabili studente
+	    student->group=student->matricola;
+	    student->leader=TRUE;
+	}
 	//chiudo il gruppo (anche se manca poco tempo)
 	my_group->is_closed=TRUE;
 	student->leader=TRUE;
