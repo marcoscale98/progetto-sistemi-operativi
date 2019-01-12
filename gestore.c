@@ -36,7 +36,7 @@ void print_data(int array[], int size){
         printf("VOTO\tFREQUENZA\n");
 
         int v, i,cnt;
-        for(v=0;v<30;v++){
+        for(v=0;v<=30;v++){
             for(i=0, cnt=0;i<size;i++){
                 if(v==array[i])
                     cnt++;
@@ -47,7 +47,6 @@ void print_data(int array[], int size){
         }
     }
 }
-//
 
 int main(){                 //codice del gestore
     //set degli handler
@@ -161,13 +160,13 @@ int main(){                 //codice del gestore
     
     int timer;
     while((timer = time_left())>0){
+        
         if(timer%5 == 0){       //aggiornamento del tempo rimanente ogni 5 secondi
-            reserve_sem(sem_id,SEM_SHM);
             shared->time_left = timer;
             #ifdef DEBUG
                 printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), timer);
             #endif
-            release_sem(sem_id,SEM_SHM);
+            sleep(1);
         }
     } //allo scattare del timer verrà invocato l'handler
     shared->time_left = 0;
@@ -191,9 +190,11 @@ int main(){                 //codice del gestore
         struct info_group grp;
         if(stud.group != NOGROUP)
             grp = shared->group[stud.group];
+            /*
 #ifdef DEBUG
         printf("indirizzo di grp: %p\n", &grp);
 #endif
+* */
         int voto_SO = grp.max_voto;     //massimo voto che lo studente i puo' prendere
 
         if(stud.group==NOGROUP || !grp.is_closed) //azzera il voto se il gruppo non e' chiuso
@@ -223,7 +224,9 @@ int main(){                 //codice del gestore
     TEST_ERROR;
 
     //rimozione ipc
-    semctl(sem_id,0,IPC_RMID);      // *** non so perche' dia INTERRUPTED SYSTEM CALL ***
+    semctl(sem_id, SEM_READY, IPC_RMID);
+    TEST_ERROR;
+    semctl(sem_id, SEM_SHM, IPC_RMID); 
     TEST_ERROR;
     shmctl(shm_id,IPC_RMID,NULL);
     TEST_ERROR;

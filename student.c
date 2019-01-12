@@ -169,12 +169,7 @@ int main(int argc,char *argv[]){
     int n_invitati=0;
     int n_rifiutati=0;
     memset(invitati,-1,sizeof(invitati));
-    
-/***********************************************************************
- * 
- * GLI STUDENTI RIMANGONO BLOCCATI NEL WHILE
- * 
- * ********************************************************************/
+
 #ifdef DEBUG
     printf("Valore di aula->time_left: %d\n", aula->time_left);
 #endif
@@ -246,7 +241,7 @@ int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject) {
     int mittente;
     
     //controlla se ha ricevuto degli inviti
-    while(msgrcv(msg_id, &invito,MSG_LEN,student->matricola,IPC_NOWAIT)!=-1){
+    while(msgrcv(msg_id, &invito,sizeof(invito.text),student->matricola,IPC_NOWAIT)!=-1){
 	sscanf(invito.text,"%s : %d", messaggio, &mittente);
 	if(student->leader || *accettato || my_group->is_closed) {
 	    //il leader non può accettare inviti
@@ -321,7 +316,10 @@ int stesso_turno (struct info_student *mat1, struct info_student *mat2) {
 //decido se conviene chiudere il gruppo(return true) oppure no(return false)
 int chiudo_gruppo() {
     
-    if(my_group->n_members==4 || my_group->n_members==student->nof_elems || aula->time_left <= (CRITIC_TIME)) {
+    //se è già chiuso il gruppo, non si fa nulla
+    if (my_group->is_closed);
+
+    else if(my_group->n_members==4 || my_group->n_members==student->nof_elems || aula->time_left <= (CRITIC_TIME)) {
 	if(my_group->n_members<=1) {
 	    //se devo chiudere il gruppo da solo
 	    //creo gruppo
@@ -334,8 +332,16 @@ int chiudo_gruppo() {
 	//chiudo il gruppo (anche se manca poco tempo)
 	my_group->is_closed=TRUE;
 	student->leader=TRUE;
+	#ifdef DEBUG
+	    printf("Il gruppo numero %d è stato chiuso dal leader.\n"\
+		   "Informazioni aggiornate del gruppo\n"\
+		   "n_members: %d\n"\
+		   "is_closed: %d\n"\
+		   "max_voto: %d\n\n",\
+		   student->group,my_group->n_members, my_group->is_closed, my_group->max_voto);
+	#endif
     }
-    //se è già chiuso il gruppo, non si fa nulla
+
     return my_group->is_closed;
 }
 
@@ -386,51 +392,34 @@ void invita_studente(int destinatario, int *invitati, int *n_invitati){
 void rifiuta_invito(int mittente, int *n_rifiutati){
     //il destinatario dell'invito è student->matricola
     struct msgbuf rifiuto;
-//    char messaggio[50];
-
-//    char buf[8];
-//    sprintf(buf,"%d",mittente);
-
-//    while(msgrcv(msg_id,&invito,MSG_LEN,mittente,IPC_NOWAIT)!=1){
-        /*if(n_rifiuti<=max_reject){ Mettere nel Main */
-//            sscanf(invito.text,"%s : %d", messaggio, &destinatario);
-            rifiuto.mtype = mittente;
-            sprintf(rifiuto.text,"Rifiuto : %d", student->matricola);
- //           strcat(invito.text, buf); //matricola di chi accetta
-            if(msgsnd(msg_id, &rifiuto, MSG_LEN, 0)<0) {
-                fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
-                exit(EXIT_FAILURE);
-            }
-            TEST_ERROR
-	    #ifdef DEBUG
-		printf("Il Destinatario %d ha rifiutato l'invito del Mittente %d\n",student->matricola, mittente);
-	    #endif
-            *n_rifiutati +=1;
-
-   // }
+    
+    rifiuto.mtype = mittente;
+    sprintf(rifiuto.text,"Rifiuto : %d", student->matricola);
+    
+    if(msgsnd(msg_id, &rifiuto, sizeof(rifiuto.text), 0)<0) {
+	fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+	exit(EXIT_FAILURE);
+    }
+    #ifdef DEBUG
+	printf("Il Destinatario %d ha rifiutato l'invito del Mittente %d\n",student->matricola, mittente);
+    #endif
+    *n_rifiutati +=1;
 }
 
-void accetta_invito(int mittente){ //il destinatario dell'invito è student->matricola
-    
-//    char messaggio[50];
+void accetta_invito(int mittente){ 
+    //il destinatario dell'invito è student->matricola
     struct msgbuf accetto;
-
-    char buf[8];
-    sprintf(buf,"%d",mittente);
-
-//    while(msgrcv(msg_id,&invito,MSG_LEN,mittente,IPC_NOWAIT)!=-1){
-//        sscanf(invito.text,"%s : %d", messaggio,&destinatario);
-        accetto.mtype = mittente;
-        sprintf(accetto.text,"Accetto : %d", student->matricola);
-//        strcat(invito.text,buf); //buf = matricola di chi accetta
-        if(msgsnd(msg_id, &accetto, MSG_LEN, 0)<0) {
-            fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
-            exit(EXIT_FAILURE);
-	}
-	#ifdef DEBUG
-            printf("Il Destinatario : %d ha accettato l'invito del Mittente %d\n",student->matricola, mittente);
-	#endif
-//	}
+    
+    accetto.mtype = mittente; //mittente dell'invito
+    sprintf(accetto.text,"Accetto : %d", student->matricola);
+    
+    if(msgsnd(msg_id, &accetto, sizeof(accetto.text), 0)<0) {
+	fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+	exit(EXIT_FAILURE);
+    }
+    #ifdef DEBUG
+	printf("Il Destinatario : %d ha accettato l'invito del Mittente %d\n",student->matricola, mittente);
+    #endif
 } 
 
 //controlla che tutti gli invitati abbiano risposto agli inviti
