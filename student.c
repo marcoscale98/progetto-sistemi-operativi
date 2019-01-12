@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/msg.h>
 #include <signal.h>
@@ -13,6 +15,7 @@
 #include "header/sig_util.h"
 #include "header/sem_util.h"
 #include "header/stud.h"
+
 
 struct info_student *student;
 struct info_group *my_group;
@@ -208,7 +211,7 @@ int controllo_risposte(int *invitati, int n_invitati) {
     int mittente;
     
     //controlla se ha ricevuto risposta agli inviti
-    while(msgrcv(msg_id, &risposta, sizeof(risposta.text), (long)(student->matricola+100), IPC_NOWAIT)!=-1){
+    while(msgrcv(msg_id, &risposta, sizeof(risposta.text), (long)(student->matricola+100), IPC_NOWAIT | MSG_COPY)!=-1){ //i messaggi non vengono eliminati dalla coda: per permettere di leggere anche gli inviti
 	sscanf(risposta.text,"%s %d", messaggio, &mittente);
 	if(strcmp("Accetto",messaggio)==0){
 	    inserisci_nel_mio_gruppo(mittente);
@@ -244,29 +247,31 @@ int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject) {
     //controlla se ha ricevuto degli inviti
     while(msgrcv(msg_id, &invito,sizeof(invito.text),(long)(student->matricola+100),IPC_NOWAIT)!=-1){
 	sscanf(invito.text,"%s %d", messaggio, &mittente);
-	if(student->leader || *accettato || my_group->is_closed) {
-	    //il leader non può accettare inviti
-	    //se ho già accettato un invito, gli altri li rifiuto
-	    rifiuta_invito(mittente, n_rifiutati);
-	}
-	//valuto se accettare o meno
-	/* accetta se non hai più rifiuti a disposizione */
-	else if( (*n_rifiutati==max_reject) || \
-	    
-	    /* oppure se il mittente ha lo stesso nof_elems */
-	    (aula->student[mittente].nof_elems == student->nof_elems) || \
-	    
-	    /* oppure se non ha lo stesso nof_elems, allora posso accettare inviti da studenti con il voto più alto del mio di 3 punti */
-	    (aula->student[mittente].group==NOGROUP && aula->student[mittente].voto_AdE-3 >= student->voto_AdE) || \
-	    (aula->group[mittente].n_members>1 && aula->group[mittente].max_voto-3 >= student->voto_AdE) || \
-	    
-	    /* oppure se siamo nel CRITIC_TIME, allora accetto qualunque invito */
-	    (aula->time_left <= CRITIC_TIME) ) {
-		accetta_invito(mittente);
-		*accettato=TRUE;
-	}
-	else {
-	    rifiuta_invito(mittente, n_rifiutati);
+	if(strcmp("Invito",messaggio)==0) {
+	    if(student->leader || *accettato || my_group->is_closed) {
+		//il leader non può accettare inviti
+		//se ho già accettato un invito, gli altri li rifiuto
+		rifiuta_invito(mittente, n_rifiutati);
+	    }
+	    //valuto se accettare o meno
+	    /* accetta se non hai più rifiuti a disposizione */
+	    else if( (*n_rifiutati==max_reject) || \
+		
+		/* oppure se il mittente ha lo stesso nof_elems */
+		(aula->student[mittente].nof_elems == student->nof_elems) || \
+		
+		/* oppure se non ha lo stesso nof_elems, allora posso accettare inviti da studenti con il voto più alto del mio di 3 punti */
+		(aula->student[mittente].group==NOGROUP && aula->student[mittente].voto_AdE-3 >= student->voto_AdE) || \
+		(aula->group[mittente].n_members>1 && aula->group[mittente].max_voto-3 >= student->voto_AdE) || \
+		
+		/* oppure se siamo nel CRITIC_TIME, allora accetto qualunque invito */
+		(aula->time_left <= CRITIC_TIME) ) {
+		    accetta_invito(mittente);
+		    *accettato=TRUE;
+	    }
+	    else {
+		rifiuta_invito(mittente, n_rifiutati);
+	    }
 	}
     }
     return *accettato;
