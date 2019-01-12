@@ -9,6 +9,7 @@
 #include <sys/sem.h>
 #include <sys/msg.h>
 #include <sys/shm.h>
+#include <sys/wait.h>
 #include "header/error.h"
 #include "header/conf_reader.h"
 #include "header/sem_util.h"
@@ -151,7 +152,6 @@ int main(){                 //codice del gestore
     //pulizia della coda dei messaggi
     struct msgbuf message;
     while(msgrcv(msg_id,&message,sizeof(message.text),(long)0,IPC_NOWAIT)!=-1);
-    TEST_ERROR;
     
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Calcolo dei voti\n",getpid());

@@ -13,12 +13,12 @@ struct msgbuf{
 //controlla se ha ricevuto risposta agli inviti
 //return true se tutti hanno risposto
 //return false se qualcuno non ha risposto
-int controllo_risposte(int *invitati, int n_invitati);
+int controllo_risposte(int *invitati, int n_invitati, int *inviti);
 
 //controlla gli inviti ricevuti e li valuta
 //return true se accetta un invito
 //return false se non accetta
-int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject) ;
+int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject, int *inviti);
 
 int max(int num1, int num2);
 

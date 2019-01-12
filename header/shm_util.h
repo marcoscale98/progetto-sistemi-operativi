@@ -17,7 +17,6 @@ struct info_student{
 struct info_group{
     int n_members;  //numero di elementi del gruppo
     int is_closed;  //0 false (aperto), 1 true (chiuso)
-    int pref_nof_elems;     //moda del valore nof_elems dei membri
     int max_voto;   //voto massimo del gruppo
 };
 
