@@ -22,9 +22,6 @@ int msg_id;
 //handler per SIGUSR1: per processi studente
 void handler_sigusr1(int sig){
     printf("Student (PID: %d). Bloccato. Aspetto il voto\n",getpid());
-    int msg_id;
-    msg_id = msgget(IPC_KEY,0666);
-    //TEST_ERROR;
 
     struct msgbuf message;
     msgrcv(msg_id,&message,sizeof(message.text),(long)(student->matricola+100),0);
@@ -36,7 +33,7 @@ void handler_sigusr1(int sig){
     exit(EXIT_SUCCESS);
 }
 
-//funzione richiamata per impostare l'handler di SIGALRM
+//funzione richiamata per impostare l'handler di SIGUSR1
 int sa_sigusr1(){
     struct sigaction sa;
     sa.sa_handler = handler_sigusr1;
