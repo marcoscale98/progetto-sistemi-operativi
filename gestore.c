@@ -158,9 +158,7 @@ int main(){                 //codice del gestore
 #endif
     //calcolo dei voti
     int AdE[POP_SIZE], SO[POP_SIZE];
-    memset(AdE,-1,sizeof(AdE));
-    memset(SO,-1,sizeof(SO));
-
+    
     for(i=0;i<POP_SIZE;i++){
         //contiene la struttura dello studente in posizione i
         struct info_student stud = shared->student[i];
@@ -168,12 +166,6 @@ int main(){                 //codice del gestore
         struct info_group grp;
         if(stud.group != NOGROUP)
             grp = shared->group[stud.group];
-            /*
-    #ifdef DEBUG
-        printf("indirizzo di grp: %p\n", &grp);
-    #endif
-
-* */
 
         //massimo voto che lo studente i puo' prendere
         int voto_SO = grp.max_voto;

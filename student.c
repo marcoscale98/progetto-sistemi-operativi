@@ -80,10 +80,11 @@ int main(int argc,char *argv[]){
     TEST_ERROR;
     
     int matricola = atoi(argv[1]);
-    
+/*
 #ifdef DEBUG
     printf("_Student (PID: %d). IPC agganciate\n",getpid());
 #endif
+* */
     //INIZIALIZZAZIONE MEMORIA CONDIVISA
     aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
     TEST_ERROR;
@@ -130,7 +131,7 @@ int main(int argc,char *argv[]){
     my_group->n_members=0;
     my_group->is_closed=FALSE;
     my_group->max_voto=0;
-
+/*
 #ifdef DEBUG
     printf("_Student (PID: %d). Student inizializzato\n"\
 				"_student->matricola: %d\n"\
@@ -148,7 +149,7 @@ int main(int argc,char *argv[]){
     getpid(),student->matricola, prob_2, prob_3, nof_invites, max_reject, student->group,
     student->voto_AdE, student->nof_elems, my_group->n_members, my_group->is_closed, my_group->max_voto);
 #endif
-   
+  */ 
 #ifdef DEBUG
     printf("_Student (PID: %d). Aspetto l'inizio della simulazione\n",getpid());
 #endif 
@@ -164,13 +165,16 @@ int main(int argc,char *argv[]){
     int inviti[POP_SIZE]; //array che contiene lo stato degli inviti ricevuto da altri studenti (LIBERO:non sono stato invitato, INVITATO)
     int n_invitati=0;
     int n_rifiutati=0;
-    memset(invitati,LIBERO,sizeof(invitati));
-    memset(inviti, LIBERO, sizeof(inviti));
-/*
+    int i;
+    for(i=0;i<POP_SIZE;i++) {
+	invitati[i]=LIBERO;
+	inviti[i]=LIBERO;
+    }
+
 #ifdef DEBUG
-    printf("Valore di aula->time_left: %d\n", aula->time_left);
+    printf("Valore di invitati[5]: %d\n", invitati[5]);
 #endif
-*/
+
     //STRATEGIA INVITI
     while(aula->time_left > 0) {
         reserve_sem(sem_id, SEM_SHM);
@@ -241,6 +245,7 @@ int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject, int *invit
     int matricola;
     for(matricola=0;matricola<POP_SIZE;matricola++) {
 	if(inviti[matricola]==INVITATO) {
+	    inviti[matricola]=LIBERO;
 	    if(student->leader || *accettato || my_group->is_closed) {
 		//il leader non può accettare inviti
 		//se ho già accettato un invito, gli altri li rifiuto
@@ -279,27 +284,37 @@ int max(int num1, int num2) {
 
 void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
     struct info_student *stud2;
-    int i;
-    for(i=0; i<POP_SIZE; i++) {
+    int i, max_invites, n=0;//n conta gli inviti fatti durante questa chiamata di funzione
+    if(student->group==NOGROUP)
+	max_invites=3;
+    else
+	max_invites=4-my_group->n_members;
+    //non si possono invitare più studenti di quanti ne potrebbe contenere un gruppo
+    for(i=0; i<POP_SIZE && n<=max_invites && *n_invitati<nof_invites; i++) {
         stud2 = &(aula->student[i]);
         
-        //se sono dello stesso turno, non hanno un gruppo e ho ancora inviti a disposizione (imprescindibile per un invito)
-        if(stesso_turno(stud2, student) && stud2->group==NOGROUP && *n_invitati<nof_invites && invitati[stud2->matricola]==LIBERO) {
+        //se sono dello stesso turno, non hanno un gruppo (imprescindibile per un invito)
+        if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
             
             //se hanno la stessa preferenza di nof_elems
             if(stud2->nof_elems==student->nof_elems) {
                 
                 //se stud2.voto > mio.voto
-                if(stud2->voto_AdE > (student->voto_AdE))
+                if(stud2->voto_AdE > (student->voto_AdE)){
                     invita_studente(stud2->matricola, invitati, n_invitati);
-		else if(aula->time_left <= CRITIC_TIME)
+		    n++;
+		}
+		else if(aula->time_left <= CRITIC_TIME) {
 		    invita_studente(stud2->matricola, invitati, n_invitati);
+		    n++;
+		}
             }
 	    
 	    //se non hanno la mia stessa preferenza di nof_elems e siamo nel CRITIC TIME
 	    else if(aula->time_left <= CRITIC_TIME) {
 		//invita qualunque studente pur di arrivare al nof_elems
 		invita_studente(stud2->matricola, invitati, n_invitati);
+		n++;
 	    }
         }
     }    
