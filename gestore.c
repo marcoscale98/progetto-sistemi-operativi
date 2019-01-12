@@ -32,10 +32,10 @@ void print_array(int *a, int sz){
 // stampa per ogni voto il numero di studenti che ha tale voto
 void print_data(int array[], int size){
     if(array && size>0){
-        print_array(array,size);
+        //print_array(array,size);
         printf("VOTO\tFREQUENZA\n");
 
-        int v, i,cnt;
+        int v, i,cnt, sum=0;
         for(v=0;v<=30;v++){
             for(i=0, cnt=0;i<size;i++){
                 if(v==array[i])
@@ -43,33 +43,30 @@ void print_data(int array[], int size){
             }
             if(cnt>0){
                 printf("%d\t%d\n",v,cnt);
+                sum += cnt*v;
             }
         }
+        printf("VOTO MEDIO = %d\n",sum/POP_SIZE);
     }
 }
 
 int main(){                 //codice del gestore
     //set degli handler
+    sa_sigsegv();
+    TEST_ERROR;
     sa_sigint();
     TEST_ERROR;
     sa_sigalrm();
     TEST_ERROR;
-    sa_sigsegv();
-    TEST_ERROR;
 
-#ifdef DEBUG
-    printf("_Gestore (PID: %d). Inizio\n",getpid());
-#endif
+    printf("Gestore (PID: %d). Inizio programma\n",getpid());
+
     //inizializzazione delle variabili della simulazione
     struct sim_opt options;
     if(init_options(&options)==-1){
-        printf("ERRORE: PID: %d. %s, %d. Errore nell'inizializzazione delle variabili\n", getpid(), __FILE__, __LINE__);
+        printf("ERRORE: PID= %d. %s, %d. Errore nell'inizializzazione delle variabili\n", getpid(), __FILE__, __LINE__);
         exit(EXIT_FAILURE);
     }
-
-#ifdef DEBUG
-    printf("_Gestore (PID: %d). init_options fatta\n",getpid());
-#endif
 
     //set di args
     char matricola[ARG_SIZE],
@@ -91,30 +88,23 @@ int main(){                 //codice del gestore
     TEST_ERROR;
     shm_id = shmget(IPC_KEY,SHM_SIZE,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
-
-    if(sem_id==-1 || msg_id==-1 || shm_id==-1){
-        printf("Gestore (PID: %d). Errore nella creazione delle IPCS\n",getpid());
-        exit(EXIT_FAILURE);
-    }
-
     //acquisizione indirizzo memoria condivisa
     struct info_sim *shared;
     shared = shmat(shm_id,NULL,0);
     TEST_ERROR;
+    if(sem_id==-1 || msg_id==-1 || shm_id==-1 ||shared==(void *)-1){
+        printf("Gestore (PID: %d). Errore nella creazione delle IPCS\n",getpid());
+        exit(EXIT_FAILURE);
+    }
     
     //inizializzazione del semaforo di scrittura
     init_sem_available(sem_id,SEM_SHM);
     TEST_ERROR;
-    //semaforo SEM_READY inizializzato a 0
+    //semaforo SEM_READY inizializzato a 0: per bloccare gli studenti dopo la loro inizializzazione
     init_sem_in_use(sem_id,SEM_READY);
     TEST_ERROR;
 
-#ifdef DEBUG
-    printf("_Gestore (PID: %d). Create ipc e inizializzate\n"\
-           "Valore del SEM_SHM: %d\n"\
-           "Valore del SEM_READY: %d\n",
-           getpid(), get_sem_val(sem_id, SEM_SHM), get_sem_val(sem_id, SEM_READY));
-#endif
+    printf("Gestore (PID: %d). Create IPCS e inizializzate\n",getpid());
 
     //creazione dei figli
     int i, value; 
@@ -126,54 +116,42 @@ int main(){                 //codice del gestore
             case 0:
                 sprintf(matricola,"%d",i);
                 execvp("./student",args);
-                printf("ERRORE: PID: %d, %s, %d. Invocazione di execvp fallita\n",getpid(),__FILE__,__LINE__);
+                printf("ERRORE: PID= %d, %s, %d. Invocazione di execvp fallita\n",getpid(),__FILE__,__LINE__);
                 break;
             default:
-                /*
-                #ifdef DEBUG
-                printf("Gestore (PID: %d). Creato lo studente con matricola %d\n",getpid(),i);
-                #endif
-                */
                 break;
         }    
     }
-#ifdef DEBUG
-    printf("_Gestore (PID: %d). Creati figli\n",getpid());
-#endif
+    printf("Gestore (PID: %d). Creati figli\n",getpid());
 
-#ifdef DEBUG
-    printf("_Gestore (PID: %d). Aspetto l'inizializzazione degli studenti\n",getpid());
-#endif
     //attesa dell'inizializzazione degli studenti
     while(get_sem_val(sem_id,SEM_READY)!=-POP_SIZE);
 
     //set del timer e inizio simulazione
-    set_timer(options.sim_time);
     shared->time_left = options.sim_time;
+    set_timer(options.sim_time);
     printf("Gestore (PID: %d). Timer inizializzato e inizio simulazione\n",getpid());
 
     //sblocco degli studenti
     init_sem(sem_id,SEM_READY,POP_SIZE);
 #ifdef DEBUG
-    printf("Gestore (PID: %d). Studenti sbloccati\n",getpid());
+    printf("_Gestore (PID: %d). Studenti sbloccati\n",getpid());
 #endif
-    
-    int timer;
-    while((timer = time_left())>0){
-        
-        if(timer%5 == 0){       //aggiornamento del tempo rimanente ogni 5 secondi
-            shared->time_left = timer;
-            #ifdef DEBUG
-                printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), timer);
-            #endif
-            sleep(1);
-        }
+
+    //ciclo di aggiornamento time_left
+    while(time_left()>0){
+        shared->time_left = time_left();
+    #ifdef DEBUG
+        printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), time_left());
+    #endif
+        sleep(5);
     } //allo scattare del timer verrà invocato l'handler
     shared->time_left = 0;
 
     //pulizia della coda dei messaggi
-        struct msgbuf message;
-        while(msgrcv(msg_id,&message,sizeof(message.text),0,IPC_NOWAIT)!=-1);
+    struct msgbuf message;
+    while(msgrcv(msg_id,&message,sizeof(message.text),(long)0,IPC_NOWAIT)!=-1);
+    TEST_ERROR;
     
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Calcolo dei voti\n",getpid());
@@ -191,15 +169,20 @@ int main(){                 //codice del gestore
         if(stud.group != NOGROUP)
             grp = shared->group[stud.group];
             /*
-#ifdef DEBUG
+    #ifdef DEBUG
         printf("indirizzo di grp: %p\n", &grp);
-#endif
-* */
-        int voto_SO = grp.max_voto;     //massimo voto che lo studente i puo' prendere
+    #endif
 
-        if(stud.group==NOGROUP || !grp.is_closed) //azzera il voto se il gruppo non e' chiuso
+* */
+
+        //massimo voto che lo studente i puo' prendere
+        int voto_SO = grp.max_voto;
+
+        //azzera il voto se il gruppo non e' chiuso
+        if(stud.group==NOGROUP || !grp.is_closed)
             voto_SO = 0;
-        else if(stud.nof_elems != grp.n_members)    //sottrae 3 se non e' stata rispettata la preferenza
+        //sottrae 3 se non e' stata rispettata la preferenza
+        else if(stud.nof_elems != grp.n_members)
             voto_SO-=3;
 
         //aggiornamento dei dati
@@ -207,7 +190,7 @@ int main(){                 //codice del gestore
         SO[i]=voto_SO;
 
         //invio del messaggio allo studente con il suo voto
-        message.mtype = stud.matricola;
+        message.mtype = (long)(stud.matricola+100); //+100 per evitare matricola=0
         sprintf(message.text,"%d",voto_SO);
         msgsnd(msg_id,&message,sizeof(message.text),0);
         TEST_ERROR;
