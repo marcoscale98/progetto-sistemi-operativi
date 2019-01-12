@@ -212,7 +212,7 @@ int controllo_risposte(int *invitati, int n_invitati) {
     
     //controlla se ha ricevuto risposta agli inviti
     while(msgrcv(msg_id, &risposta, sizeof(risposta.text), (long)(student->matricola+100), IPC_NOWAIT)!=-1){
-	sscanf(risposta.text,"%s : %d", messaggio, &mittente);
+	sscanf(risposta.text,"%s %d", messaggio, &mittente);
 	if(strcmp("Accetto",messaggio)==0){
 	    inserisci_nel_mio_gruppo(mittente);
 	    setta_risposta(mittente, invitati, n_invitati);
@@ -226,6 +226,10 @@ int controllo_risposte(int *invitati, int n_invitati) {
 	}
 	else if(strcmp("Rifiuto",messaggio)==0){
 	    setta_risposta(mittente, invitati, n_invitati);
+	}
+	else {
+	    fprintf(stderr, "%s: %d. Errore nella ricezione della risposta all'invito #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+	    exit(EXIT_FAILURE);
 	}
     }
     return hanno_risposto(invitati, n_invitati);
@@ -242,7 +246,7 @@ int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject) {
     
     //controlla se ha ricevuto degli inviti
     while(msgrcv(msg_id, &invito,sizeof(invito.text),(long)(student->matricola+100),IPC_NOWAIT)!=-1){
-	sscanf(invito.text,"%s : %d", messaggio, &mittente);
+	sscanf(invito.text,"%s %d", messaggio, &mittente);
 	if(student->leader || *accettato || my_group->is_closed) {
 	    //il leader non può accettare inviti
 	    //se ho già accettato un invito, gli altri li rifiuto
@@ -372,11 +376,7 @@ void inserisci_nel_mio_gruppo(int matricola) {
 void invita_studente(int destinatario, int *invitati, int *n_invitati){
     struct msgbuf invito;
     invito.mtype = (long)(destinatario+100);//per evitare matricole=0
-    sprintf(invito.text,"Invito : ");
-
-    char buf[8];
-    sprintf(buf,"%d",student->matricola);
-    strcat(invito.text,buf);
+    sprintf(invito.text,"Invito %d", student->matricola);
 
     if(msgsnd(msg_id, &invito,sizeof(invito.text),0)==-1) {
         fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
@@ -394,7 +394,7 @@ void rifiuta_invito(int mittente, int *n_rifiutati){
     struct msgbuf rifiuto;
     
     rifiuto.mtype = (long)(mittente+100);
-    sprintf(rifiuto.text,"Rifiuto : %d", student->matricola);
+    sprintf(rifiuto.text,"Rifiuto %d", student->matricola);
     
     if(msgsnd(msg_id, &rifiuto, sizeof(rifiuto.text), 0)<0) {
 	fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
@@ -411,7 +411,7 @@ void accetta_invito(int mittente){
     struct msgbuf accetto;
     
     accetto.mtype = (long)(mittente+100); //mittente dell'invito
-    sprintf(accetto.text,"Accetto : %d", student->matricola);
+    sprintf(accetto.text,"Accetto %d", student->matricola);
     
     if(msgsnd(msg_id, &accetto, sizeof(accetto.text), 0)<0) {
 	fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));

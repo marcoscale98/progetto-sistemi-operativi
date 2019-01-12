@@ -196,6 +196,9 @@ int main(){                 //codice del gestore
         TEST_ERROR;
     }
 
+    //aspetto che gli studenti abbiano ricevuto e stampato i voti
+    waitpid(-1, NULL, 0);
+
     //stampa dei dati della simulazione
     printf("Gestore (PID: %d). Dati dei voti di Architettura degli Elaboratori\n",getpid());
     print_data(AdE,POP_SIZE);
