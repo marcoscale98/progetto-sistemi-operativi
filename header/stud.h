@@ -39,10 +39,7 @@ void rifiuta_invito(int mittente, int *n_rifiutati);
 void accetta_invito(int mittente);
 
 //controlla che tutti gli invitati abbiano risposto agli inviti
-int hanno_risposto(int *invitati, int n_invitati);
-
-//funzione che imposta a -1 l'elemento che contiene la matricola uguale a mittente
-void setta_risposta(int mittente, int *invitati, int n_invitati);
+int hanno_risposto(int *invitati);
 
 //handler per SIGUSR1: per processi studente
 void handler_sigusr1(int sig);

@@ -16,6 +16,10 @@
 #include "header/sem_util.h"
 #include "header/stud.h"
 
+#define LIBERO 1
+#define INVITATO 0
+#define RISPOSTO -1
+
 
 struct info_student *student;
 struct info_group *my_group;
@@ -165,10 +169,10 @@ int main(int argc,char *argv[]){
 #endif
 
     int accettato_invito = FALSE;
-    int invitati[nof_invites];
+    int invitati[POP_SIZE];
     int n_invitati=0;
     int n_rifiutati=0;
-    memset(invitati,-1,sizeof(invitati));
+    memset(invitati,LIBERO,sizeof(invitati));
 
 #ifdef DEBUG
     printf("Valore di aula->time_left: %d\n", aula->time_left);
@@ -215,7 +219,7 @@ int controllo_risposte(int *invitati, int n_invitati) {
 	sscanf(risposta.text,"%s %d", messaggio, &mittente);
 	if(strcmp("Accetto",messaggio)==0){
 	    inserisci_nel_mio_gruppo(mittente);
-	    setta_risposta(mittente, invitati, n_invitati);
+	    invitati[mittente]=RISPOSTO;
 	    #ifdef DEBUG
 		printf("Informazioni aggiornate gruppo n. %d\n"\
 		       "n_members: %d\n"\
@@ -225,14 +229,14 @@ int controllo_risposte(int *invitati, int n_invitati) {
 	    #endif
 	}
 	else if(strcmp("Rifiuto",messaggio)==0){
-	    setta_risposta(mittente, invitati, n_invitati);
+	    invitati[mittente]=RISPOSTO;
 	}
 	else {
 	    fprintf(stderr, "%s: %d. Errore nella ricezione della risposta all'invito #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
 	    exit(EXIT_FAILURE);
 	}
     }
-    return hanno_risposto(invitati, n_invitati);
+    return hanno_risposto(invitati);
 
 }
 
@@ -291,7 +295,7 @@ void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
         stud2 = &(aula->student[i]);
         
         //se sono dello stesso turno, non hanno un gruppo e ho ancora inviti a disposizione (imprescindibile per un invito)
-        if(stesso_turno(stud2, student) && stud2->group==NOGROUP && *n_invitati<nof_invites) {
+        if(stesso_turno(stud2, student) && stud2->group==NOGROUP && *n_invitati<nof_invites && invitati[stud2->matricola]==LIBERO) {
             
             //se hanno la stessa preferenza di nof_elems
             if(stud2->nof_elems==student->nof_elems) {
@@ -387,7 +391,7 @@ void invita_studente(int destinatario, int *invitati, int *n_invitati){
     #ifdef DEBUG
 	printf("Il Mittente : %d ha invitato il Destinatario %d\n",student->matricola,destinatario);
     #endif
-    invitati[*n_invitati] = destinatario;
+    invitati[destinatario] = INVITATO;
     *n_invitati +=1;
 }
 
@@ -425,25 +429,17 @@ void accetta_invito(int mittente){
 } 
 
 //controlla che tutti gli invitati abbiano risposto agli inviti
-int hanno_risposto(int *invitati, int n_invitati){
+int hanno_risposto(int *invitati){
     int ha_risposto = TRUE;
     int i;
-    for(i=0;i<n_invitati && ha_risposto;i++){
-        if(invitati[i]==-1){
+    for(i=0;i<POP_SIZE && ha_risposto;i++){
+        if(invitati[i]==INVITATO){
             ha_risposto = FALSE;
         }
     }
     return ha_risposto;
 }
 
-//funzione che imposta a -1 l'elemento che contiene la matricola uguale a mittente
-void setta_risposta(int mittente, int *invitati, int n_invitati){
-    int i=0;
-    while(i<n_invitati && invitati[i]!=mittente){
-        i++;
-    }
-    invitati[i]=-1;
-}
 
 
 
