@@ -393,7 +393,7 @@ void rifiuta_invito(int mittente, int *n_rifiutati){
     //il destinatario dell'invito è student->matricola
     struct msgbuf rifiuto;
     
-    rifiuto.mtype = (long)mittente;
+    rifiuto.mtype = (long)(mittente+100);
     sprintf(rifiuto.text,"Rifiuto : %d", student->matricola);
     
     if(msgsnd(msg_id, &rifiuto, sizeof(rifiuto.text), 0)<0) {
@@ -410,7 +410,7 @@ void accetta_invito(int mittente){
     //il destinatario dell'invito è student->matricola
     struct msgbuf accetto;
     
-    accetto.mtype = (long)mittente; //mittente dell'invito
+    accetto.mtype = (long)(mittente+100); //mittente dell'invito
     sprintf(accetto.text,"Accetto : %d", student->matricola);
     
     if(msgsnd(msg_id, &accetto, sizeof(accetto.text), 0)<0) {
