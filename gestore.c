@@ -138,13 +138,17 @@ int main(){                 //codice del gestore
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Studenti sbloccati\n",getpid());
 #endif
-
+/*********************************************************************************
+ * 
+ * SE STA FACENDO LA TIME_LEFT E SCATTA IL TIMER NON VIENE INVIATO IL SEGNALE AGLI STUDENTI
+ * 
+ * **********************************************************************************/
     //ciclo di aggiornamento time_left
-    while(time_left()>0){
+    while(shared->time_left>0){
         shared->time_left = time_left();
-    #ifdef DEBUG
-        printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), time_left());
-    #endif
+    //#ifdef DEBUG
+        printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), shared->time_left);
+    //#endif
         sleep(UPDATE_TIME);
     } //allo scattare del timer verrà invocato l'handler
     shared->time_left = 0;
@@ -203,9 +207,7 @@ int main(){                 //codice del gestore
     TEST_ERROR;
 
     //rimozione ipc
-    semctl(sem_id, SEM_READY, IPC_RMID);
-    TEST_ERROR;
-    semctl(sem_id, SEM_SHM, IPC_RMID); 
+    semctl(sem_id, 0, IPC_RMID);
     TEST_ERROR;
     shmctl(shm_id,IPC_RMID,NULL);
     TEST_ERROR;
