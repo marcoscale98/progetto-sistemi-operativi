@@ -171,10 +171,6 @@ int main(int argc,char *argv[]){
 	inviti[i]=LIBERO;
     }
 
-#ifdef DEBUG
-    printf("Valore di invitati[5]: %d\n", invitati[5]);
-#endif
-
     //STRATEGIA INVITI
     while(aula->time_left > 0) {
         reserve_sem(sem_id, SEM_SHM);
@@ -234,6 +230,7 @@ int controllo_risposte(int *invitati, int n_invitati, int *inviti) {
 	    exit(EXIT_FAILURE);
 	}
     }
+    errno=0; //perchè la IPC_NOWAIT genera un errore se non trova nulla
     return hanno_risposto(invitati);
 
 }
@@ -290,7 +287,7 @@ void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
     else
 	max_invites=4-my_group->n_members;
     //non si possono invitare più studenti di quanti ne potrebbe contenere un gruppo
-    for(i=0; i<POP_SIZE && n<=max_invites && *n_invitati<nof_invites; i++) {
+    for(i=0; i<POP_SIZE && n<max_invites && *n_invitati<nof_invites; i++) {
         stud2 = &(aula->student[i]);
         
         //se sono dello stesso turno, non hanno un gruppo (imprescindibile per un invito)
