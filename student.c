@@ -1,59 +1,447 @@
-#include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+#include <sys/shm.h>
+#include <sys/msg.h>
+#include <signal.h>
+#include "header/shm_util.h"
+#include "header/error.h"
+#include "header/config.h"
+#include "header/sig_util.h"
+#include "header/sem_util.h"
 #include "header/stud.h"
 
-#define NOGROUP 0
+#define LIBERO 1
+#define INVITATO 0
+#define RISPOSTO -1
 
-int main(int argc, char *argv[]){ /*argv[0]="student", argv[1]=matricola, argv[2]=prob_2, argv[3]=prob_3, argv[4]=nof_invites, argv[5]=max_reject, argv[6]=POPSIZE, argv[7]=shmid */
-    
-    if(argc!=8){
+
+struct info_student *student;
+struct info_group *my_group;
+struct info_sim *aula;
+int msg_id;
+
+//handler per SIGUSR1: per processi studente
+void handler_sigusr1(int sig){
+    printf("Student (PID: %d). Bloccato. Aspetto il voto\n",getpid());
+
+    struct msgbuf message;
+    msgrcv(msg_id,&message,sizeof(message.text),(long)(student->matricola+100),0);
+    printf("Student (PID: %d). voto_SO: %d\n", getpid(), atoi(message.text));
+
+    //FINE SIMULAZIONE
+    shmdt(aula);
+
+    exit(EXIT_SUCCESS);
+}
+
+//funzione richiamata per impostare l'handler di SIGUSR1
+int sa_sigusr1(){
+    struct sigaction sa;
+    sa.sa_handler = handler_sigusr1;
+    return sigaction(SIGUSR1,&sa,NULL);
+}
+
+//argv[0]="student", argv[1]=matricola, argv[2]=prob_2, argv[3]=prob_3, argv[4]=nof_invites, argv[5]=max_reject
+int main(int argc,char *argv[]){
+
+    if(argc!=6){
         printf("Numero di argomenti inseriti non corretto\n");
         exit(EXIT_FAILURE);
     }
+/*
+#ifdef DEBUG
+    printf("_Student (PID: %d). Parametri inizializzati\n",getpid());
+    printf("_matricola: %s\n",argv[1]);
+    printf("_prob_2: %s\n", argv[2]);
+    printf("_prob_3: %s\n", argv[3]);
+    printf("_nof_invites: %s\n", argv[4]);
+    printf("_max_reject: %s\n", argv[5]);
+#endif
+*/
+    //set handler
+    sa_sigusr1();
+    TEST_ERROR;
+    sa_sigsegv(); //può capitare il segmentation fault nello student
+    TEST_ERROR;
+
+    //INIZIALIZZAZIONE IPC
+    int sem_id, shm_id;
+    sem_id = semget(IPC_KEY, N_SEM, 0666);
+    TEST_ERROR;
+    msg_id = msgget(IPC_KEY, 0666);
+    TEST_ERROR;
+    shm_id = shmget(IPC_KEY,SHM_SIZE, 0666);
+    TEST_ERROR;
     
-    //definizione e inizializzazione variabili studente    
-    struct info_student info_stud;
+    int matricola = atoi(argv[1]);
+/*
+#ifdef DEBUG
+    printf("_Student (PID: %d). IPC agganciate\n",getpid());
+#endif
+* */
+    //INIZIALIZZAZIONE MEMORIA CONDIVISA
+    aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
+    TEST_ERROR;
+    student = &(aula->student[matricola]);
+    my_group = &(aula->group[matricola]);
+
+    //INIZIALIZZAZIONE VARIABILI STUDENTE    
     float prob_2 = atoi(argv[2])/100.0,
           prob_3 = atoi(argv[3])/100.0;
-    int popsize = atoi(argv[6]),
-        shmid = atoi(argv[7]),
-        nof_invites = atoi(argv[4]),
+    int nof_invites = atoi(argv[4]),
         max_reject = atoi(argv[5]);
         
-    info_stud.matricola = atoi(argv[1]);
-    info_stud.group = NOGROUP; //non ancora in un gruppo
-    //l'indice dei gruppi parte dall'1
-    
+    student->matricola = atoi(argv[1]);
+    student->group = NOGROUP;
+    student->leader=FALSE;
+ /*   
+#ifdef DEBUG
+    printf("_Student (PID: %d). prima parte inizializzazione fatta\n",getpid());
+#endif  
+*/
     //inizializzazione voto_AdE
     srand(getpid());
-    info_stud.voto_AdE = rand()%13 + 18;  //compreso tra 18 e 30
-
-    //inizializzazione nof_elems
-    srand(getpid());
-    int val = rand()%popsize;
-    if(val<popsize*prob_2)
-        info_stud.nof_elems = 2;
-    else if(val>=popsize*prob_2 && val<popsize*(prob_2+prob_3))
-        info_stud.nof_elems = 3;
-    else //if(val>=POPSIZE*(prob_2+prob_3) && val<POPSIZE)
-        info_stud.nof_elems = 4;
-    
-    //TESTING
+    student->voto_AdE = rand()%13 + 18;  //compreso tra 18 e 30
     /*
-    printf(" info_stud.matricola: %d\n", info_stud.matricola);
-    printf(" prob_2: %f\n", prob_2);
-    printf(" prob_3: %f\n", prob_3);
-    printf(" nof_invites: %d\n", nof_invites);
-    printf(" max_reject: %d\n", max_reject);
-    printf(" popsize: %d\n", popsize);
-    printf(" info_stud.group: %d\n", info_stud.group);
-    printf(" info_stud.voto_AdE: %d\n", info_stud.voto_AdE);
-    printf(" info_stud.nof_elems: %d\n", info_stud.nof_elems);
-    printf(" shmid: %d\n", shmid);
-    */
-        
-    //incremento del semaforo di 1
+#ifdef DEBUG
+    printf("_Student (PID: %d). voto_AdE determinato\n",getpid());
+#endif
+*/  
+    //inizializzazione nof_elems
+    int val = rand()%POP_SIZE;
+    if(val<POP_SIZE*prob_2)
+        student->nof_elems = 2;
+    else if(val>=POP_SIZE*prob_2 && val<POP_SIZE*(prob_2+prob_3))
+        student->nof_elems = 3;
+    else //if(val>=popsize*(prob_2+prob_3) && val<popsize)
+        student->nof_elems = 4;
+/*     
+#ifdef DEBUG
+    printf("_Student (PID: %d). nof_elems determinato\n",getpid());
+#endif  
+* */
+    //INIZIALIZZAZIONE VARIABILI GRUPPO
+    //inizialmente uno studente non fa parte di nessun gruppo
+    my_group->n_members=0;
+    my_group->is_closed=FALSE;
+    my_group->max_voto=0;
+/*
+#ifdef DEBUG
+    printf("_Student (PID: %d). Student inizializzato\n"\
+				"_student->matricola: %d\n"\
+				"_prob_2: %f\n"\
+				"_prob_3: %f\n"\
+				"_nof_invites: %d\n"\
+				"_max_reject: %d\n"\
+				"_student->group: %d\n"\
+				"_student->voto_AdE: %d\n"\
+				"_student->nof_elems: %d\n"\
+				"_my_group->n_members: %d\n"\
+				"_my_group->is_closed: %d \n"\
+				"_my_group->max_voto: %d\n",
+				
+    getpid(),student->matricola, prob_2, prob_3, nof_invites, max_reject, student->group,
+    student->voto_AdE, student->nof_elems, my_group->n_members, my_group->is_closed, my_group->max_voto);
+#endif
+  */ 
+#ifdef DEBUG
+    printf("_Student (PID: %d). Aspetto l'inizio della simulazione\n",getpid());
+#endif 
+    reserve_sem(sem_id, SEM_READY);
+    TEST_ERROR;
     
-    return 0;
+#ifdef DEBUG
+    printf("_Student (PID: %d). Sbloccato\n",getpid());
+#endif
+
+    int accettato_invito = FALSE;
+    int invitati[POP_SIZE]; //array che contiene lo stato dell'invito mandato allo studente (LIBERO:non invitato, INVITATO, RISPOSTO: ha accettato o rifiutato)
+    int inviti[POP_SIZE]; //array che contiene lo stato degli inviti ricevuto da altri studenti (LIBERO:non sono stato invitato, INVITATO)
+    int n_invitati=0;
+    int n_rifiutati=0;
+    int i;
+    for(i=0;i<POP_SIZE;i++) {
+	invitati[i]=LIBERO;
+	inviti[i]=LIBERO;
+    }
+
+    //STRATEGIA INVITI
+    while(aula->time_left > 0) {
+        reserve_sem(sem_id, SEM_SHM);
+	//#ifdef DEBUG
+	    //printf("Student (PID: %d) può mandare gli inviti\n", getpid());
+	//#endif
+	if (controllo_risposte(invitati, n_invitati, inviti)) {//se tutti hanno risposto
+	    //se leader true rifiuta gli inviti
+	    //se ho già accettato un invito, rifiuto i successivi
+	    //se il mio gruppo è chiuso, rifiuto gli inviti
+	    accettato_invito = rispondo_inviti(&accettato_invito, &n_rifiutati, max_reject, inviti);
+
+	    if (!accettato_invito && !chiudo_gruppo()) {
+		mando_inviti(invitati, &n_invitati, nof_invites);
+	    }
+	}
+	//#ifdef DEBUG
+	    //printf("Student (PID: %d) ha finito il suo giro di inviti\n", getpid());
+	//#endif
+	release_sem(sem_id, SEM_SHM);
+    } 
+ 
+    //FINE SIMULAZIONE
+    sleep(5); //aspetta il voto dal gestore
+    //se passa lo sleep vuol dire che c'è qualcosa che non va
+    exit(EXIT_FAILURE);
 }
+
+//controlla se ha ricevuto risposta agli inviti
+//return true se tutti hanno risposto
+//return false se qualcuno non ha risposto
+int controllo_risposte(int *invitati, int n_invitati, int *inviti) {
+    struct msgbuf risposta;
+    char messaggio[32];
+    int mittente;
+    
+    //controlla se ha ricevuto risposta agli inviti
+    while(msgrcv(msg_id, &risposta, sizeof(risposta.text), (long)(student->matricola+100), IPC_NOWAIT)!=-1){ //i messaggi non vengono eliminati dalla coda: per permettere di leggere anche gli inviti
+	sscanf(risposta.text,"%s %d", messaggio, &mittente);
+	if(strcmp("Accetto",messaggio)==0){
+	    inserisci_nel_mio_gruppo(mittente);
+	    invitati[mittente]=RISPOSTO;
+	    #ifdef DEBUG
+		printf("Informazioni aggiornate gruppo n. %d\n"\
+		       "n_members: %d\n"\
+		       "is_closed: %d\n"\
+		       "max_voto: %d\n\n",\
+		       student->group,my_group->n_members, my_group->is_closed, my_group->max_voto);
+	    #endif
+	}
+	else if(strcmp("Rifiuto",messaggio)==0)
+	    invitati[mittente]=RISPOSTO;
+	else if(strcmp("Invito", messaggio)==0)
+	    inviti[mittente]=INVITATO;
+	else {
+	    fprintf(stderr, "%s: %d. Errore nella ricezione della risposta all'invito #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+	    exit(EXIT_FAILURE);
+	}
+    }
+    errno=0; //perchè la IPC_NOWAIT genera un errore se non trova nulla
+    return hanno_risposto(invitati);
+
+}
+
+//controlla gli inviti ricevuti e li valuta
+//return true se accetta un invito
+//return false se non accetta
+int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject, int *inviti) {
+    int matricola;
+    for(matricola=0;matricola<POP_SIZE;matricola++) {
+	if(inviti[matricola]==INVITATO) {
+	    inviti[matricola]=LIBERO;
+	    if(student->leader || *accettato || my_group->is_closed) {
+		//il leader non può accettare inviti
+		//se ho già accettato un invito, gli altri li rifiuto
+		rifiuta_invito(matricola, n_rifiutati);
+	    }
+	    //valuto se accettare o meno
+	    /* accetta se non hai più rifiuti a disposizione */
+	    else if( (*n_rifiutati==max_reject) || \
+		
+		/* oppure se il mittente ha lo stesso nof_elems */
+		(aula->student[matricola].nof_elems == student->nof_elems) || \
+		
+		/* oppure se non ha lo stesso nof_elems, allora posso accettare inviti da studenti con il voto più alto del mio di 3 punti */
+		(aula->student[matricola].group==NOGROUP && aula->student[matricola].voto_AdE-3 >= student->voto_AdE) || \
+		(aula->group[matricola].n_members>1 && aula->group[matricola].max_voto-3 >= student->voto_AdE) || \
+		
+		/* oppure se siamo nel CRITIC_TIME, allora accetto qualunque invito */
+		(aula->time_left <= CRITIC_TIME) ) {
+		    accetta_invito(matricola);
+		    *accettato=TRUE;
+	    }
+	    else {
+		rifiuta_invito(matricola, n_rifiutati);
+	    }
+	}
+    }
+    return *accettato;
+}
+
+int max(int num1, int num2) {
+    if(num1>num2)
+        return num1;
+    else
+	return num2;
+}
+
+void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
+    struct info_student *stud2;
+    int i, max_invites, n=0;//n conta gli inviti fatti durante questa chiamata di funzione
+    if(student->group==NOGROUP)
+	max_invites=3;
+    else
+	max_invites=4-my_group->n_members;
+    //non si possono invitare più studenti di quanti ne potrebbe contenere un gruppo
+    for(i=0; i<POP_SIZE && n<max_invites && *n_invitati<nof_invites; i++) {
+        stud2 = &(aula->student[i]);
+        
+        //se sono dello stesso turno, non hanno un gruppo (imprescindibile per un invito)
+        if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
+            
+            //se hanno la stessa preferenza di nof_elems
+            if(stud2->nof_elems==student->nof_elems) {
+                
+                //se stud2.voto > mio.voto
+                if(stud2->voto_AdE > (student->voto_AdE)){
+                    invita_studente(stud2->matricola, invitati, n_invitati);
+		    n++;
+		}
+		else if(aula->time_left <= CRITIC_TIME) {
+		    invita_studente(stud2->matricola, invitati, n_invitati);
+		    n++;
+		}
+            }
+	    
+	    //se non hanno la mia stessa preferenza di nof_elems e siamo nel CRITIC TIME
+	    else if(aula->time_left <= CRITIC_TIME) {
+		//invita qualunque studente pur di arrivare al nof_elems
+		invita_studente(stud2->matricola, invitati, n_invitati);
+		n++;
+	    }
+        }
+    }    
+    
+    
+}
+
+//confronta le matricole di 2 studenti e verifica siano nello stesso turno
+int stesso_turno (struct info_student *mat1, struct info_student *mat2) {
+    return ((mat1->matricola)%2)==((mat2->matricola)%2);
+}
+
+//decido se conviene chiudere il gruppo(return true) oppure no(return false)
+int chiudo_gruppo() {
+    
+    //se è già chiuso il gruppo, non si fa nulla
+    if (my_group->is_closed);
+
+    else if(my_group->n_members==4 || my_group->n_members==student->nof_elems || aula->time_left <= (CRITIC_TIME)) {
+	if(my_group->n_members<=1) {
+	    //se devo chiudere il gruppo da solo
+	    //creo gruppo
+	    my_group->n_members=1;
+	    my_group->max_voto=student->voto_AdE;
+	    //modifico mie variabili studente
+	    student->group=student->matricola;
+	    student->leader=TRUE;
+	}
+	//chiudo il gruppo (anche se manca poco tempo)
+	my_group->is_closed=TRUE;
+	student->leader=TRUE;
+	#ifdef DEBUG
+	    printf("Il gruppo numero %d è stato chiuso dal leader.\n"\
+		   "Informazioni aggiornate del gruppo\n"\
+		   "n_members: %d\n"\
+		   "is_closed: %d\n"\
+		   "max_voto: %d\n\n",\
+		   student->group,my_group->n_members, my_group->is_closed, my_group->max_voto);
+	#endif
+    }
+
+    return my_group->is_closed;
+}
+
+void inserisci_nel_mio_gruppo(int matricola) {
+    
+    if(my_group->n_members<=1){ //non esiste ancora il gruppo
+	//creo gruppo
+	my_group->n_members=2;
+	my_group->max_voto=max(student->voto_AdE, aula->student[matricola].voto_AdE);
+	//modifico mie variabili studente
+	student->group=student->matricola;
+	student->leader=TRUE;
+	//modifico variabili altro student
+	aula->student[matricola].group=student->matricola;
+    }
+    else if(my_group->n_members<4) {
+	//modifichiamo i campi dello studente "matricola"
+	aula->student[matricola].group = student->group;
+	//modifico i campi del gruppo
+	my_group->n_members += 1;
+	my_group->max_voto = max(my_group->max_voto, aula->student[matricola].voto_AdE);
+    } else {
+	fprintf(stderr, "%s: %d. Il gruppo non può essere formato da più di 4 studenti #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+	exit(EXIT_FAILURE);
+    }
+}
+
+void invita_studente(int destinatario, int *invitati, int *n_invitati){
+    struct msgbuf invito;
+    invito.mtype = (long)(destinatario+100);//per evitare matricole=0
+    sprintf(invito.text,"Invito %d", student->matricola);
+
+    if(msgsnd(msg_id, &invito,sizeof(invito.text),0)==-1) {
+        fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    #ifdef DEBUG
+	printf("Il Mittente : %d ha invitato il Destinatario %d\n",student->matricola,destinatario);
+    #endif
+    invitati[destinatario] = INVITATO;
+    *n_invitati +=1;
+}
+
+void rifiuta_invito(int mittente, int *n_rifiutati){
+    //il destinatario dell'invito è student->matricola
+    struct msgbuf rifiuto;
+    
+    rifiuto.mtype = (long)(mittente+100);
+    sprintf(rifiuto.text,"Rifiuto %d", student->matricola);
+    
+    if(msgsnd(msg_id, &rifiuto, sizeof(rifiuto.text), 0)<0) {
+	fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+	exit(EXIT_FAILURE);
+    }
+    #ifdef DEBUG
+	printf("Il Destinatario %d ha rifiutato l'invito del Mittente %d\n",student->matricola, mittente);
+    #endif
+    *n_rifiutati +=1;
+}
+
+void accetta_invito(int mittente){ 
+    //il destinatario dell'invito è student->matricola
+    struct msgbuf accetto;
+    
+    accetto.mtype = (long)(mittente+100); //mittente dell'invito
+    sprintf(accetto.text,"Accetto %d", student->matricola);
+    
+    if(msgsnd(msg_id, &accetto, sizeof(accetto.text), 0)<0) {
+	fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+	exit(EXIT_FAILURE);
+    }
+    #ifdef DEBUG
+	printf("Il Destinatario : %d ha accettato l'invito del Mittente %d\n",student->matricola, mittente);
+    #endif
+} 
+
+//controlla che tutti gli invitati abbiano risposto agli inviti
+int hanno_risposto(int *invitati){
+    int ha_risposto = TRUE;
+    int i;
+    for(i=0;i<POP_SIZE && ha_risposto;i++){
+        if(invitati[i]==INVITATO){
+            ha_risposto = FALSE;
+        }
+    }
+    return ha_risposto;
+}
+
+
+
+
+
