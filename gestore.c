@@ -145,7 +145,7 @@ int main(){                 //codice del gestore
     #ifdef DEBUG
         printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), time_left());
     #endif
-        sleep(5);
+        sleep(UPDATE_TIME);
     } //allo scattare del timer verrà invocato l'handler
     shared->time_left = 0;
 
