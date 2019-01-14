@@ -28,11 +28,12 @@ int msg_id;
 
 //handler per SIGUSR1: per processi studente
 void handler_sigusr1(int sig){
+#ifdef DEBUG
     printf("Student (PID: %d). Bloccato. Aspetto il voto\n",getpid());
-
+#endif
     struct msgbuf message;
     msgrcv(msg_id,&message,sizeof(message.text),(long)(student->matricola+100),0);
-    printf("Student (PID: %d). voto_SO: %d\n", getpid(), atoi(message.text));
+    printf("Student (PID: %d), matricola: %d. voto_SO: %d\n", getpid(), student->matricola,atoi(message.text));
 
     //FINE SIMULAZIONE
     shmdt(aula);

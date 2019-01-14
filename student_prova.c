@@ -65,6 +65,8 @@ int sa_sigusr1(){
     return sigaction(SIGUSR1,&sa,NULL);
 }
 
+int choose_student(struct info_sim* shm,)
+
 int main(int argc,char *argv[]){
     //set handler
     sa_sigusr1();
@@ -198,7 +200,6 @@ int main(int argc,char *argv[]){
                     state = LEADER;
                 }
             }
-
         }
     }
 }

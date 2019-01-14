@@ -104,9 +104,9 @@ int main(){                 //codice del gestore
     //semaforo SEM_READY inizializzato a 0: per bloccare gli studenti dopo la loro inizializzazione
     init_sem_in_use(sem_id,SEM_READY);
     TEST_ERROR;
-
+#ifdef DEBUG
     printf("Gestore (PID: %d). Create IPCS e inizializzate\n",getpid());
-
+#endif
     //creazione dei figli
     int i, value; 
     for(i=0, value=-1;value && i<POP_SIZE;i++){
@@ -123,15 +123,16 @@ int main(){                 //codice del gestore
                 break;
         }    
     }
-    printf("Gestore (PID: %d). Creati figli\n",getpid());
-
+#ifdef DEBUG
+    printf("_Gestore (PID: %d). Creati figli\n",getpid());
+#endif
     //attesa dell'inizializzazione degli studenti
     while(get_sem_val(sem_id,SEM_READY)!=-POP_SIZE);
 
     //set del timer e inizio simulazione
     shared->time_left = options.sim_time;
     set_timer(options.sim_time);
-    printf("Gestore (PID: %d). Timer inizializzato e inizio simulazione\n",getpid());
+    printf("Gestore (PID: %d). Inizio simulazione\n",getpid());
 
     //sblocco degli studenti
     init_sem(sem_id,SEM_READY,POP_SIZE);
@@ -190,22 +191,23 @@ int main(){                 //codice del gestore
     }
 
     //aspetto che gli studenti abbiano ricevuto e stampato i voti
-    waitpid(-1, NULL, 0);
+    while(waitpid(-1, NULL, 0)!=-1);
 
     //stampa dei dati della simulazione
-    printf("Gestore (PID: %d). Dati dei voti di Architettura degli Elaboratori\n",getpid());
+    printf("#####################################################################\n");
+    printf("Gestore (PID: %d). Dati dei voti di Architettura degli Elaboratori:\n",getpid());
     print_data(AdE,POP_SIZE);
-    printf("Gestore (PID: %d). Dati dei voti di Sistemi Operativi\n",getpid());
+    printf("#####################################################################\n");
+    printf("Gestore (PID: %d). Dati dei voti di Sistemi Operativi:\n",getpid());
     print_data(SO,POP_SIZE);
 
     //detach memoria condivisa
+    errno=0;    //inserito solo per non far visualizzare l'errore della waitpid (è normale che dia errore), valutare un'alternativa
     shmdt(shared);
     TEST_ERROR;
 
     //rimozione ipc
-    semctl(sem_id, SEM_READY, IPC_RMID);
-    TEST_ERROR;
-    semctl(sem_id, SEM_SHM, IPC_RMID); 
+    semctl(sem_id,0, IPC_RMID);
     TEST_ERROR;
     shmctl(shm_id,IPC_RMID,NULL);
     TEST_ERROR;
