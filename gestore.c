@@ -132,15 +132,9 @@ int main(){                 //codice del gestore
 
     //set del timer e inizio simulazione
     shared->time_left = options.sim_time;
-<<<<<<< HEAD
-    set_timer(options.sim_time);
-    printf("Gestore (PID: %d). Inizio simulazione\n",getpid());
-=======
-    //set_timer(options.sim_time);
     time_t start=time(NULL), timer;
     TEST_ERROR;
     printf("Gestore (PID: %d). Timer inizializzato e inizio simulazione\n",getpid());
->>>>>>> b18e31c95bc4e1ff6301429238053ac3ee53baa5
 
     //sblocco degli studenti
     init_sem(sem_id,SEM_READY,POP_SIZE);
@@ -239,11 +233,7 @@ int main(){                 //codice del gestore
     TEST_ERROR;
 
     //rimozione ipc
-<<<<<<< HEAD
-    semctl(sem_id,0, IPC_RMID);
-=======
-    semctl(sem_id, 0, IPC_RMID);
->>>>>>> b18e31c95bc4e1ff6301429238053ac3ee53baa5
+    semctl(sem_id,0,IPC_RMID);
     TEST_ERROR;
     shmctl(shm_id,IPC_RMID,NULL);
     TEST_ERROR;
