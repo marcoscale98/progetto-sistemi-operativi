@@ -10,6 +10,7 @@
 #include <sys/msg.h>
 #include <sys/shm.h>
 #include <sys/wait.h>
+#include <time.h>
 #include "header/error.h"
 #include "header/conf_reader.h"
 #include "header/sem_util.h"
@@ -131,25 +132,56 @@ int main(){                 //codice del gestore
 
     //set del timer e inizio simulazione
     shared->time_left = options.sim_time;
+<<<<<<< HEAD
     set_timer(options.sim_time);
     printf("Gestore (PID: %d). Inizio simulazione\n",getpid());
+=======
+    //set_timer(options.sim_time);
+    time_t start=time(NULL), timer;
+    TEST_ERROR;
+    printf("Gestore (PID: %d). Timer inizializzato e inizio simulazione\n",getpid());
+>>>>>>> b18e31c95bc4e1ff6301429238053ac3ee53baa5
 
     //sblocco degli studenti
     init_sem(sem_id,SEM_READY,POP_SIZE);
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Studenti sbloccati\n",getpid());
 #endif
-
+    int k=1;
+    while((int)(time(&timer)-start) < options.sim_time) {
+        if((int)(timer-start) == (int)(options.sim_time*(0.10*k))) {
+            shared->time_left = options.sim_time - (int)(timer-start); //tempo rimanente
+            #ifdef DEBUG
+            printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), shared->time_left);
+            #endif
+            k++;
+        }
+    }
+    printf("Gestore (PID: %d). Tempo scaduto! Gli studenti si fermino\n",getpid());
+    struct sigaction sa;
+    sa.sa_handler = SIG_IGN;    //fa ignorare al gestore il segnale sigusr1
+    sigaction(SIGUSR1,&sa,NULL);
+    TEST_ERROR;
+    killpg(0,SIGUSR1);
+    TEST_ERROR;
+    shared->time_left=0;
+    
+/*********************************************************************************
+ * 
+ * SE STA FACENDO LA TIME_LEFT E SCATTA IL TIMER NON VIENE INVIATO IL SEGNALE AGLI STUDENTI
+ * 
+ * **********************************************************************************/
+ /*
     //ciclo di aggiornamento time_left
-    while(time_left()>0){
+    while(shared->time_left>0){
         shared->time_left = time_left();
-    #ifdef DEBUG
-        printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), time_left());
-    #endif
-        sleep(5);
+    //#ifdef DEBUG
+        printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), shared->time_left);
+    //#endif
+        sleep(UPDATE_TIME);
     } //allo scattare del timer verrà invocato l'handler
     shared->time_left = 0;
-
+*/
     //pulizia della coda dei messaggi
     struct msgbuf message;
     while(msgrcv(msg_id,&message,sizeof(message.text),(long)0,IPC_NOWAIT)!=-1);
@@ -207,7 +239,11 @@ int main(){                 //codice del gestore
     TEST_ERROR;
 
     //rimozione ipc
+<<<<<<< HEAD
     semctl(sem_id,0, IPC_RMID);
+=======
+    semctl(sem_id, 0, IPC_RMID);
+>>>>>>> b18e31c95bc4e1ff6301429238053ac3ee53baa5
     TEST_ERROR;
     shmctl(shm_id,IPC_RMID,NULL);
     TEST_ERROR;

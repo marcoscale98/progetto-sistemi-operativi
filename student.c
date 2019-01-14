@@ -28,12 +28,22 @@ int msg_id;
 
 //handler per SIGUSR1: per processi studente
 void handler_sigusr1(int sig){
+<<<<<<< HEAD
 #ifdef DEBUG
     printf("Student (PID: %d). Bloccato. Aspetto il voto\n",getpid());
 #endif
     struct msgbuf message;
     msgrcv(msg_id,&message,sizeof(message.text),(long)(student->matricola+100),0);
     printf("Student (PID: %d), matricola: %d. voto_SO: %d\n", getpid(), student->matricola,atoi(message.text));
+=======
+    #ifdef DEBUG
+	printf("Student (PID: %d). Bloccato. Aspetto il voto\n",getpid());
+    #endif
+    //sincornizzare gli studenti con un semaforo per non sovrapporre le stampe
+    struct msgbuf message;
+    msgrcv(msg_id,&message,sizeof(message.text),(long)(student->matricola+100),0);
+    printf("Student (PID: %5d). Matricola: %3d. Voto_SO: %2d\n", getpid(),student->matricola, atoi(message.text));
+>>>>>>> b18e31c95bc4e1ff6301429238053ac3ee53baa5
 
     //FINE SIMULAZIONE
     shmdt(aula);
@@ -242,6 +252,34 @@ int controllo_risposte(int *invitati, int n_invitati, int *inviti) {
 int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject, int *inviti) {
     int matricola;
     for(matricola=0;matricola<POP_SIZE;matricola++) {
+	/****** STRATEGIA DI SCALE ********************************************/
+	//if(inviti[matricola]==INVITATO) {
+	    //inviti[matricola]=LIBERO;
+	    //if(student->leader || *accettato || my_group->is_closed) {
+		////il leader non può accettare inviti
+		////se ho già accettato un invito, gli altri li rifiuto
+		//rifiuta_invito(matricola, n_rifiutati);
+	    //}
+	    ////valuto se accettare o meno
+	    ///* accetta se non hai più rifiuti a disposizione */
+	    //else if( (*n_rifiutati==max_reject) || \
+		
+		///* oppure se il mittente ha lo stesso nof_elems */
+		//(aula->student[matricola].nof_elems == student->nof_elems) || \
+		
+		///* oppure se non ha lo stesso nof_elems, allora posso accettare inviti da studenti con il voto più alto del mio di 3 punti */
+		//(aula->student[matricola].group==NOGROUP && aula->student[matricola].voto_AdE-3 >= student->voto_AdE) || \
+		//(aula->group[matricola].n_members>1 && aula->group[matricola].max_voto-3 >= student->voto_AdE) || \
+		
+		///* oppure se siamo nel CRITIC_TIME, allora accetto qualunque invito */
+		//(aula->time_left <= CRITIC_TIME) ) {
+		    //accetta_invito(matricola);
+		    //*accettato=TRUE;
+	    //}
+	    //else {
+		//rifiuta_invito(matricola, n_rifiutati);
+	    //}
+	//}
 	if(inviti[matricola]==INVITATO) {
 	    inviti[matricola]=LIBERO;
 	    if(student->leader || *accettato || my_group->is_closed) {
@@ -252,22 +290,26 @@ int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject, int *invit
 	    //valuto se accettare o meno
 	    /* accetta se non hai più rifiuti a disposizione */
 	    else if( (*n_rifiutati==max_reject) || \
-		
-		/* oppure se il mittente ha lo stesso nof_elems */
-		(aula->student[matricola].nof_elems == student->nof_elems) || \
-		
-		/* oppure se non ha lo stesso nof_elems, allora posso accettare inviti da studenti con il voto più alto del mio di 3 punti */
-		(aula->student[matricola].group==NOGROUP && aula->student[matricola].voto_AdE-3 >= student->voto_AdE) || \
-		(aula->group[matricola].n_members>1 && aula->group[matricola].max_voto-3 >= student->voto_AdE) || \
-		
-		/* oppure se siamo nel CRITIC_TIME, allora accetto qualunque invito */
-		(aula->time_left <= CRITIC_TIME) ) {
+	    /* oppure se siamo nel CRITIC_TIME, allora accetto qualunque invito */
+	    (aula->time_left <= CRITIC_TIME) ) {
+		accetta_invito(matricola);
+		*accettato=TRUE;
+	    }
+	    /* oppure se il mittente ha lo stesso nof_elems */
+	    else if(aula->student[matricola].nof_elems == student->nof_elems) {
+		if(student->voto_AdE < 27 && aula->student[matricola].voto_AdE > student->voto_AdE) {
 		    accetta_invito(matricola);
 		    *accettato=TRUE;
+		}
+		else if(student->voto_AdE >=27){ //voto compreso tra 27 e 30
+		    accetta_invito(matricola);
+		    *accettato=TRUE;
+		}
+		else 
+		    rifiuta_invito(matricola, n_rifiutati);
 	    }
-	    else {
+	    else
 		rifiuta_invito(matricola, n_rifiutati);
-	    }
 	}
     }
     return *accettato;
@@ -290,7 +332,7 @@ void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
     //non si possono invitare più studenti di quanti ne potrebbe contenere un gruppo
     for(i=0; i<POP_SIZE && n<max_invites && *n_invitati<nof_invites; i++) {
         stud2 = &(aula->student[i]);
-        
+        /***** STRATEGIA DI SCALE ***********************************************
         //se sono dello stesso turno, non hanno un gruppo (imprescindibile per un invito)
         if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
             
@@ -314,6 +356,28 @@ void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
 		invita_studente(stud2->matricola, invitati, n_invitati);
 		n++;
 	    }
+        }
+	* ***************************************************************************/
+	if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
+            //se siamo nel CRITIC TIME
+	    if(aula->time_left <= CRITIC_TIME) {
+		//invita qualunque studente pur di arrivare al nof_elems
+		invita_studente(stud2->matricola, invitati, n_invitati);
+		n++;
+	    }
+            //se hanno la stessa preferenza di nof_elems
+            else if(stud2->nof_elems==student->nof_elems) {
+                
+                //se io ho voto compreso tra 18 e 26 e stud2.voto > mio.voto
+                if(student->voto_AdE<27 && stud2->voto_AdE > student->voto_AdE){
+                    invita_studente(stud2->matricola, invitati, n_invitati);
+		    n++;
+		}
+		else if(student->voto_AdE>=27){ //se ho il voto compreso tra 27 e 30
+		    invita_studente(stud2->matricola, invitati, n_invitati);
+		    n++;
+		}
+            }
         }
     }    
     
