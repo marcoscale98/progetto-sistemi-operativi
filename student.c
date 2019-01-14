@@ -16,11 +16,6 @@
 #include "header/sem_util.h"
 #include "header/stud.h"
 
-#define LIBERO 1
-#define INVITATO 0
-#define RISPOSTO -1
-
-
 struct info_student *student;
 struct info_group *my_group;
 struct info_sim *aula;
@@ -175,24 +170,31 @@ int main(int argc,char *argv[]){
 
     //STRATEGIA INVITI
     while(aula->time_left > 0) {
-        reserve_sem(sem_id, SEM_SHM);
-	//#ifdef DEBUG
-	    //printf("Student (PID: %d) può mandare gli inviti\n", getpid());
-	//#endif
 	if (controllo_risposte(invitati, n_invitati, inviti)) {//se tutti hanno risposto
-	    //se leader true rifiuta gli inviti
-	    //se ho già accettato un invito, rifiuto i successivi
-	    //se il mio gruppo è chiuso, rifiuto gli inviti
+	    //reserve il mio semaforo
+	    reserve_sem(sem_id, 2+student->matricola);
+	    
 	    accettato_invito = rispondo_inviti(&accettato_invito, &n_rifiutati, max_reject, inviti);
 
 	    if (!accettato_invito && !chiudo_gruppo()) {
-		mando_inviti(invitati, &n_invitati, nof_invites);
+		algoritmo_inviti(invitati, &n_invitati, nof_invites); //determina chi invitare e aggiorna array invitati (DA_INVITARE)
+				
+		//mando realmente gli inviti
+		int j=0;
+		for(;j<POP_SIZE;j++) {
+		    if(invitati[j]==DA_INVITARE) {
+			//semaforo reserve su chi voglio invitare
+			reserve_sem(sem_id, 2+j);
+			invita_studente(j);
+			invitati[j]=INVITATO;
+			//release semaforo su chi ho invitato
+			release_sem(sem_id, 2+j);
+		    }
+		}
 	    }
+	    //release semaforo del mio processo
+	    release_sem(sem_id,2+student->matricola);
 	}
-	//#ifdef DEBUG
-	    //printf("Student (PID: %d) ha finito il suo giro di inviti\n", getpid());
-	//#endif
-	release_sem(sem_id, SEM_SHM);
     } 
  
     //FINE SIMULAZIONE
@@ -313,7 +315,7 @@ int max(int num1, int num2) {
 	return num2;
 }
 
-void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
+void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
     struct info_student *stud2;
     int i, max_invites, n=0;//n conta gli inviti fatti durante questa chiamata di funzione
     if(student->group==NOGROUP)
@@ -323,7 +325,7 @@ void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
     //non si possono invitare più studenti di quanti ne potrebbe contenere un gruppo
     for(i=0; i<POP_SIZE && n<max_invites && *n_invitati<nof_invites; i++) {
         stud2 = &(aula->student[i]);
-        /***** STRATEGIA DI SCALE ***********************************************
+        
         //se sono dello stesso turno, non hanno un gruppo (imprescindibile per un invito)
         if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
             
@@ -332,11 +334,13 @@ void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
                 
                 //se stud2.voto > mio.voto
                 if(stud2->voto_AdE > (student->voto_AdE)){
-                    invita_studente(stud2->matricola, invitati, n_invitati);
+		    invitati[stud2->matricola]=DA_INVITARE;
+		    n_invitati++;
 		    n++;
 		}
 		else if(aula->time_left <= CRITIC_TIME) {
-		    invita_studente(stud2->matricola, invitati, n_invitati);
+		    invitati[stud2->matricola]=DA_INVITARE;
+		    n_invitati++;
 		    n++;
 		}
             }
@@ -344,11 +348,12 @@ void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
 	    //se non hanno la mia stessa preferenza di nof_elems e siamo nel CRITIC TIME
 	    else if(aula->time_left <= CRITIC_TIME) {
 		//invita qualunque studente pur di arrivare al nof_elems
-		invita_studente(stud2->matricola, invitati, n_invitati);
+		invitati[stud2->matricola]=DA_INVITARE;
+		n_invitati++;
 		n++;
 	    }
         }
-	* ***************************************************************************/
+	/* ***************************************************************************
 	if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
             //se siamo nel CRITIC TIME
 	    if(aula->time_left <= CRITIC_TIME) {
@@ -370,6 +375,7 @@ void mando_inviti(int *invitati, int *n_invitati, int nof_invites) {
 		}
             }
         }
+	* ************************************************************************/
     }    
     
     
@@ -436,7 +442,7 @@ void inserisci_nel_mio_gruppo(int matricola) {
     }
 }
 
-void invita_studente(int destinatario, int *invitati, int *n_invitati){
+void invita_studente(int destinatario){
     struct msgbuf invito;
     invito.mtype = (long)(destinatario+100);//per evitare matricole=0
     sprintf(invito.text,"Invito %d", student->matricola);
@@ -447,9 +453,7 @@ void invita_studente(int destinatario, int *invitati, int *n_invitati){
     }
     #ifdef DEBUG
 	printf("Il Mittente : %d ha invitato il Destinatario %d\n",student->matricola,destinatario);
-    #endif
-    invitati[destinatario] = INVITATO;
-    *n_invitati +=1;
+    #endif   
 }
 
 void rifiuta_invito(int mittente, int *n_rifiutati){

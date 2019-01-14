@@ -14,6 +14,12 @@ int get_sem_val(int semid, int semnum) {
         return semctl(semid, semnum, GETVAL, arg);
 }
 
+// Ritorna il valore del semaforo (NON considerando valori negativi)
+int get_sem_val2(int semid, int semnum) {
+    union semun arg;
+        return semctl(semid, semnum, GETVAL, arg);
+}
+
 // Inizializzazione del semaforo a valore inserito da utente
 int init_sem(int semid, int semnum, int semval) {
    union semun arg;

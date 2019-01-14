@@ -84,7 +84,7 @@ int main(){                 //codice del gestore
 
     //creazione ipc
     int sem_id, shm_id, msg_id;
-    sem_id = semget(IPC_KEY,N_SEM,IPC_CREAT|IPC_EXCL|0666);
+    sem_id = semget(IPC_KEY,N_SEM+POP_SIZE,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
     msg_id = msgget(IPC_KEY, IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
@@ -105,11 +105,15 @@ int main(){                 //codice del gestore
     //semaforo SEM_READY inizializzato a 0: per bloccare gli studenti dopo la loro inizializzazione
     init_sem_in_use(sem_id,SEM_READY);
     TEST_ERROR;
+    //inizializzazione dei semafori degli studenti available
+    int i=0;
+    for(;i<POP_SIZE;i++)
+        init_sem_available(sem_id,2+i);
 
     printf("Gestore (PID: %d). Create IPCS e inizializzate\n",getpid());
 
     //creazione dei figli
-    int i, value; 
+    int value; 
     for(i=0, value=-1;value && i<POP_SIZE;i++){
         switch(value = fork()){
             case -1:

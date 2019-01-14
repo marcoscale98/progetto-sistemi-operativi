@@ -1,7 +1,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define POP_SIZE 25
+#define POP_SIZE 15
 #define TRUE 1
 #define FALSE 0
 #define ARG_SIZE 32

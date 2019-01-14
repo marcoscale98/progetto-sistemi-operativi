@@ -4,6 +4,11 @@
 #include "shm_util.h"
 
 #define MSG_LEN 100
+//etichette per definire gli stati degli inviti
+#define LIBERO 2
+#define DA_INVITARE 1
+#define INVITATO 0
+#define RISPOSTO -1
 
 struct msgbuf{
    long mtype;             /* message type, sarà > 0 */
@@ -22,7 +27,7 @@ int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject, int *invit
 
 int max(int num1, int num2);
 
-void mando_inviti(int *invitati, int *n_invitati, int nof_invites);
+void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites);
 
 //confronta le matricole di 2 studenti e verifica siano nello stesso turno
 int stesso_turno (struct info_student *mat1, struct info_student *mat2);
@@ -32,7 +37,7 @@ int chiudo_gruppo();
 
 void inserisci_nel_mio_gruppo(int matricola);
 
-void invita_studente(int destinatario, int *invitati, int *n_invitati);
+void invita_studente(int destinatario);
 
 void rifiuta_invito(int mittente, int *n_rifiutati);
 
