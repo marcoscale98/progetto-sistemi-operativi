@@ -181,8 +181,8 @@ int main(int argc,char *argv[]){
 		algoritmo_inviti(invitati, &n_invitati, nof_invites); //determina chi invitare e aggiorna array invitati (DA_INVITARE)
 				
 		//mando realmente gli inviti
-		int j=0;
-		for(;j<POP_SIZE;j++) {
+		int j;
+		for(j=0;j<POP_SIZE;j++) {
 		    if(invitati[j]==DA_INVITARE) {
 			//semaforo reserve su chi voglio invitare
 			reserve_sem(sem_id, N_SEM+j);
@@ -329,7 +329,8 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
     //non si possono invitare più studenti di quanti ne potrebbe contenere un gruppo
     for(i=0; i<POP_SIZE && n<max_invites && *n_invitati<nof_invites; i++) {
         stud2 = &(aula->student[i]);
-	#ifndef STRATEGIA_NUOVA    
+    #ifndef STRATEGIA_NUOVA  
+	/*************STRATEGIA DI SCALE ****************************************/
         //se sono dello stesso turno, non hanno un gruppo (imprescindibile per un invito)
         if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
             

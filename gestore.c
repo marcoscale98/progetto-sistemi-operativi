@@ -107,9 +107,11 @@ int main(){                 //codice del gestore
     TEST_ERROR;
 
     //inizializzazione dei semafori degli studenti available
-    int i=0;
-    for(;i<POP_SIZE;i++)
-        init_sem_available(sem_id,2+i);
+    int i;
+    for(i=0;i<POP_SIZE;i++) {
+        init_sem_available(sem_id,N_SEM+i);
+        TEST_ERROR;
+    }
 
 #ifdef DEBUG
     printf("Gestore (PID: %d). Create IPCS e inizializzate\n",getpid());
@@ -166,23 +168,7 @@ int main(){                 //codice del gestore
     killpg(0,SIGUSR1);
     TEST_ERROR;
     shared->time_left=0;
-    
-/*********************************************************************************
- * 
- * SE STA FACENDO LA TIME_LEFT E SCATTA IL TIMER NON VIENE INVIATO IL SEGNALE AGLI STUDENTI
- * 
- * **********************************************************************************/
- /*
-    //ciclo di aggiornamento time_left
-    while(shared->time_left>0){
-        shared->time_left = time_left();
-    //#ifdef DEBUG
-        printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), shared->time_left);
-    //#endif
-        sleep(UPDATE_TIME);
-    } //allo scattare del timer verrà invocato l'handler
-    shared->time_left = 0;
-*/
+ 
     //pulizia della coda dei messaggi
     struct msgbuf message;
     while(msgrcv(msg_id,&message,sizeof(message.text),(long)0,IPC_NOWAIT)!=-1);
@@ -225,6 +211,7 @@ int main(){                 //codice del gestore
 
     //aspetto che gli studenti abbiano ricevuto e stampato i voti
     while(waitpid(-1, NULL, 0)!=-1);
+    errno=0;    //inserito solo per non far visualizzare l'errore della waitpid (è normale che dia errore)
 
     //stampa dei dati della simulazione
     printf("#####################################################################\n");
@@ -235,7 +222,6 @@ int main(){                 //codice del gestore
     print_data(SO,POP_SIZE);
 
     //detach memoria condivisa
-    errno=0;    //inserito solo per non far visualizzare l'errore della waitpid (è normale che dia errore), valutare un'alternativa
     shmdt(shared);
     TEST_ERROR;
 

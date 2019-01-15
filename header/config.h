@@ -12,7 +12,7 @@
 //#define STRATEGIA_NUOVA
 
 //definire soltanto se si vuole che si stampino dei check
-//#define DEBUG
+#define DEBUG
 
 //definire soltanto se si vuole che con una TEST_ERROR si esca in caso di errore
 //#define EXIT_ON_ERROR
