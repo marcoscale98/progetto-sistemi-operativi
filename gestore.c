@@ -24,9 +24,9 @@
 int write_log(struct sim_opt opt, int voto_AdE, int voto_SO){
     FILE *fd = fopen("logfile.log","a");
     if(fd){
-        fprintf(fd, "\n%s, %s\n", __DATE__, __TIME__ );
-        fprintf(fd, "<%d, %d, %d, %d, %d, %d, %d, %d>\n",
-                opt.prob_2, opt.prob_3, opt.prob_4, opt.nof_invites,
+        fprintf(fd, "\n%s, %s\n", __DATE__, __TIME__);
+        fprintf(fd, "<%d, %d, %d, %d, %d, %d, %d, %d, %d>\n",
+                POP_SIZE, opt.prob_2, opt.prob_3, opt.prob_4, opt.nof_invites,
                 opt.max_reject, opt.sim_time,voto_AdE, voto_SO);
         fclose(fd);
         return 0;
