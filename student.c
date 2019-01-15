@@ -171,7 +171,7 @@ int main(int argc,char *argv[]){
     while(aula->time_left > 0) {
 	release_sem(sem_id, SEM_SHM);
 	
-	if (controllo_risposte(&is_leader, invitati, n_invitati, inviti)) {//se tutti hanno risposto
+	if (accettato_invito || controllo_risposte(&is_leader, invitati, n_invitati, inviti)) {	   //se tutti hanno risposto ritorna true
 	    //reserve sul mio semaforo
 	    reserve_sem(sem_id, N_SEM+student->matricola);
 	    
@@ -179,17 +179,22 @@ int main(int argc,char *argv[]){
 
 	    if (!accettato_invito && !chiudo_gruppo(&is_leader)) {
 		algoritmo_inviti(invitati, &n_invitati, nof_invites); //determina chi invitare e aggiorna array invitati (DA_INVITARE)
-				
+	
 		//mando realmente gli inviti
 		int j;
 		for(j=0;j<POP_SIZE;j++) {
 		    if(invitati[j]==DA_INVITARE) {
-			//semaforo reserve su chi voglio invitare
-			reserve_sem(sem_id, N_SEM+j);
-			invita_studente(j);
-			invitati[j]=INVITATO;
-			//release semaforo su chi ho invitato
-			release_sem(sem_id, N_SEM+j);
+			//controllo se posso invitarlo
+			if(get_sem_val(sem_id, N_SEM+j)==1) {
+			    //semaforo reserve su chi voglio invitare
+			    reserve_sem(sem_id, N_SEM+j);
+			    invita_studente(j);
+			    invitati[j]=INVITATO;
+			    //release semaforo su chi ho invitato
+			    release_sem(sem_id, N_SEM+j);
+			}
+			//altrimenti provo ad invitare gli altri
+			//altrimenti esco e vado a rispondere agli inviti
 		    }
 		}
 	    }
@@ -407,7 +412,7 @@ int chiudo_gruppo(int *is_leader) {
     //se è già chiuso il gruppo, non si fa nulla
     if (my_group->is_closed);
     else if(my_group->n_members==4 || my_group->n_members==student->nof_elems || aula->time_left <= (CRITIC_TIME)) {
-	if(my_group->n_members<=1) {
+	if(student->group==NOGROUP) {
 	    //se devo chiudere il gruppo da solo
 	    //creo gruppo
 	    my_group->n_members=1;
