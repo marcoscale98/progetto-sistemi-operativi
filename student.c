@@ -334,10 +334,16 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
     struct info_student *stud2;
     int i, max_invites, n=0;//n conta gli inviti fatti durante questa chiamata di funzione
     int sem_id=semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
+    
+    for(i=0;i<POP_SIZE;i++) {
+	if(invitati[i]==DA_INVITARE) 
+	    n++;
+    }
     if(student->group==NOGROUP)
 	max_invites=3;
     else
 	max_invites=4-my_group->n_members;
+	
     //non si possono invitare più studenti di quanti ne potrebbe contenere un gruppo
     for(i=0; i<POP_SIZE && n<max_invites && *n_invitati<nof_invites; i++) {
 	reserve_sem(sem_id, SEM_SHM);
@@ -378,7 +384,8 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
             //se siamo nel CRITIC TIME
 	    if(aula->time_left <= CRITIC_TIME) {
 		//invita qualunque studente pur di arrivare al nof_elems
-		invita_studente(stud2->matricola, invitati, n_invitati);
+		invita_studente(stud2->matricola);
+		n_invitati++;
 		n++;
 	    }
             //se hanno la stessa preferenza di nof_elems
@@ -386,11 +393,13 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
                 
                 //se io ho voto compreso tra 18 e 26 e stud2.voto > mio.voto
                 if(student->voto_AdE<27 && stud2->voto_AdE > student->voto_AdE){
-                    invita_studente(stud2->matricola, invitati, n_invitati);
+                    invita_studente(stud2->matricola);
+		    n_invitati++;
 		    n++;
 		}
 		else if(student->voto_AdE>=27){ //se ho il voto compreso tra 27 e 30
-		    invita_studente(stud2->matricola, invitati, n_invitati);
+		    invita_studente(stud2->matricola);
+		    n_invitati++;
 		    n++;
 		}
             }
@@ -411,7 +420,7 @@ int chiudo_gruppo(int *is_leader) {
     
     //se è già chiuso il gruppo, non si fa nulla
     if (my_group->is_closed);
-    else if(my_group->n_members==4 || my_group->n_members==student->nof_elems || aula->time_left <= (CRITIC_TIME)) {
+    else if(my_group->n_members==4 || my_group->n_members==student->nof_elems || aula->time_left <= (CLOSING_TIME)) {
 	if(student->group==NOGROUP) {
 	    //se devo chiudere il gruppo da solo
 	    //creo gruppo

@@ -38,8 +38,8 @@ int init_sem_in_use(int semid, int semnum) {
 // Reserve semaphore - decremento di 1
 int reserve_sem(int semid, int semnum) {
    struct sembuf sops;
-   sops.sem_num = semnum;
-   sops.sem_op = -1;
+   sops.sem_num = semnum; //numero del semaforo
+   sops.sem_op = -1;      //operazione da compiere
    sops.sem_flg = 0;
    return semop(semid, &sops, 1);
 }
@@ -50,5 +50,14 @@ int release_sem(int semid, int semnum) {
    sops.sem_num = semnum;
    sops.sem_op = 1;
    sops.sem_flg = 0;
+   return semop(semid, &sops, 1);
+}
+
+// Reserve semaphore without waiting - decremento di 1
+int reserve_sem_nowait(int semid, int semnum) {
+   struct sembuf sops;
+   sops.sem_num = semnum; //numero del semaforo
+   sops.sem_op = -1;      //operazione da compiere
+   sops.sem_flg = IPC_NOWAIT;
    return semop(semid, &sops, 1);
 }
