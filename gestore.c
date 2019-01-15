@@ -154,7 +154,9 @@ int main(){                 //codice del gestore
     while(get_sem_val(sem_id,SEM_READY)!=-POP_SIZE);
 
     //set del timer e inizio simulazione
+    reserve_sem(sem_id, SEM_SHM);
     shared->time_left = options.sim_time;
+    release_sem(sem_id, SEM_SHM);
     time_t start=time(NULL), timer;
     TEST_ERROR;
     printf("Gestore (PID: %d). Timer inizializzato e inizio simulazione\n",getpid());
@@ -168,10 +170,12 @@ int main(){                 //codice del gestore
     while((int)(time(&timer)-start) < options.sim_time) {
         //il timer si aggiorna ogni 10% di sim_time
         if((int)(timer-start) == (int)(options.sim_time*(0.10*k))) {
+            reserve_sem(sem_id, SEM_SHM);
             shared->time_left = options.sim_time - (int)(timer-start); //tempo rimanente
             #ifdef DEBUG
             printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), shared->time_left);
             #endif
+            release_sem(sem_id, SEM_SHM);
             k++;
         }
     }

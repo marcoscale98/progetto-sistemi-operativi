@@ -19,7 +19,6 @@
 struct info_student *student;
 struct info_group *my_group;
 struct info_sim *aula;
-int msg_id;
 
 //handler per SIGUSR1: per processi studente
 void handler_sigusr1(int sig){
@@ -27,6 +26,7 @@ void handler_sigusr1(int sig){
 	printf("Student (PID: %d). Bloccato. Aspetto il voto\n",getpid());
     #endif
     struct msgbuf message;
+    int msg_id = msgget(IPC_KEY, 0666);
     msgrcv(msg_id,&message,sizeof(message.text),(long)(student->matricola+100),0);
     printf("Student (PID: %5d). Matricola: %3d. Voto_SO: %2d\n", getpid(),student->matricola, atoi(message.text));
 
@@ -67,8 +67,8 @@ int main(int argc,char *argv[]){
     TEST_ERROR;
 
     //INIZIALIZZAZIONE IPC
-    int sem_id, shm_id;
-    sem_id = semget(IPC_KEY, N_SEM, 0666);
+    int sem_id, shm_id, msg_id;
+    sem_id = semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
     TEST_ERROR;
     msg_id = msgget(IPC_KEY, 0666);
     TEST_ERROR;
@@ -126,6 +126,7 @@ int main(int argc,char *argv[]){
     my_group->n_members=0;
     my_group->is_closed=FALSE;
     my_group->max_voto=0;
+    //non c'è bisogno di un semaforo perchè ogni studente scrive in un'area diversa
 /*
 #ifdef DEBUG
     printf("_Student (PID: %d). Student inizializzato\n"\
@@ -155,24 +156,23 @@ int main(int argc,char *argv[]){
     printf("_Student (PID: %d). Sbloccato\n",getpid());
 #endif
 
-    int is_leader = FALSE;
-    int accettato_invito = FALSE;
+    int is_leader=FALSE, accettato_invito=FALSE, n_invitati=0, n_rifiutati=0, i;
     //array che contiene lo stato dell'invito mandato allo studente (LIBERO:non invitato, INVITATO, RISPOSTO: ha accettato o rifiutato)
     int invitati[POP_SIZE];
     //array che contiene lo stato degli inviti ricevuto da altri studenti (LIBERO:non sono stato invitato, INVITATO)
     int inviti[POP_SIZE];
-    int n_invitati=0;
-    int n_rifiutati=0;
-    int i;
     for(i=0;i<POP_SIZE;i++) {
 	invitati[i]=LIBERO;
 	inviti[i]=LIBERO;
     }
-
+    
+    reserve_sem(sem_id, SEM_SHM);
     //STRATEGIA INVITI
     while(aula->time_left > 0) {
+	release_sem(sem_id, SEM_SHM);
+	
 	if (controllo_risposte(&is_leader, invitati, n_invitati, inviti)) {//se tutti hanno risposto
-	    //reserve il mio semaforo
+	    //reserve sul mio semaforo
 	    reserve_sem(sem_id, N_SEM+student->matricola);
 	    
 	    accettato_invito = rispondo_inviti(&accettato_invito, &is_leader, &n_rifiutati, max_reject, inviti);
@@ -196,6 +196,7 @@ int main(int argc,char *argv[]){
 	    //release semaforo del mio processo
 	    release_sem(sem_id, N_SEM+student->matricola);
 	}
+	reserve_sem(sem_id, SEM_SHM);
     } 
  
     //FINE SIMULAZIONE
@@ -210,7 +211,7 @@ int main(int argc,char *argv[]){
 int controllo_risposte(int *is_leader, int *invitati, int n_invitati, int *inviti) {
     struct msgbuf risposta;
     char messaggio[32];
-    int mittente;
+    int mittente, msg_id=msgget(IPC_KEY, 0666);
     
     //controlla se ha ricevuto risposta agli inviti
     while(msgrcv(msg_id, &risposta, sizeof(risposta.text), (long)(student->matricola+100), IPC_NOWAIT)!=-1){ //i messaggi non vengono eliminati dalla coda: per permettere di leggere anche gli inviti
@@ -244,12 +245,15 @@ int controllo_risposte(int *is_leader, int *invitati, int n_invitati, int *invit
 //return true se accetta un invito
 //return false se non accetta
 int rispondo_inviti(int *accettato, int *is_leader, int *n_rifiutati, int max_reject, int *inviti) {
-    int matricola;
+    int matricola, sem_id=semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
     for(matricola=0;matricola<POP_SIZE;matricola++) {
     #ifndef STRATEGIA_NUOVA
 	/****** STRATEGIA DI SCALE ********************************************/
 	if(inviti[matricola]==INVITATO) {
 	    inviti[matricola]=LIBERO;
+	    //riservo il semaforo per lettura e scrittura della memoria condivisa
+	    reserve_sem(sem_id, SEM_SHM);
+	    
 	    if(*is_leader || *accettato || my_group->is_closed) {
 		    //il leader non può accettare inviti
 		    //se ho già accettato un invito, gli altri li rifiuto
@@ -274,6 +278,8 @@ int rispondo_inviti(int *accettato, int *is_leader, int *n_rifiutati, int max_re
 	    else {
 		rifiuta_invito(matricola, n_rifiutati);
 	    }
+	    //rilascio il semaforo per la lettura e la scrittura della memoria condivisa
+	    release_sem(sem_id, SEM_SHM);
 	}
     #else
     /****** STRATEGIA NUOVA ********************************************/
@@ -322,13 +328,16 @@ int max(int num1, int num2) {
 void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
     struct info_student *stud2;
     int i, max_invites, n=0;//n conta gli inviti fatti durante questa chiamata di funzione
+    int sem_id=semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
     if(student->group==NOGROUP)
 	max_invites=3;
     else
 	max_invites=4-my_group->n_members;
     //non si possono invitare più studenti di quanti ne potrebbe contenere un gruppo
     for(i=0; i<POP_SIZE && n<max_invites && *n_invitati<nof_invites; i++) {
+	reserve_sem(sem_id, SEM_SHM);
         stud2 = &(aula->student[i]);
+	
     #ifndef STRATEGIA_NUOVA  
 	/*************STRATEGIA DI SCALE ****************************************/
         //se sono dello stesso turno, non hanno un gruppo (imprescindibile per un invito)
@@ -351,13 +360,14 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
             }
 	    
 	    //se non hanno la mia stessa preferenza di nof_elems e siamo nel CRITIC TIME
+	    //invita qualunque studente pur di arrivare al nof_elems
 	    else if(aula->time_left <= CRITIC_TIME) {
-		//invita qualunque studente pur di arrivare al nof_elems
 		invitati[stud2->matricola]=DA_INVITARE;
 		n_invitati++;
 		n++;
 	    }
         }
+	release_sem(sem_id, SEM_SHM);
 	#else
 	if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
             //se siamo nel CRITIC TIME
@@ -391,6 +401,8 @@ int stesso_turno (struct info_student *mat1, struct info_student *mat2) {
 
 //decido se conviene chiudere il gruppo(return true) oppure no(return false)
 int chiudo_gruppo(int *is_leader) {
+    int sem_id=semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
+    reserve_sem(sem_id, SEM_SHM);
     
     //se è già chiuso il gruppo, non si fa nulla
     if (my_group->is_closed);
@@ -416,12 +428,13 @@ int chiudo_gruppo(int *is_leader) {
 		   student->group,my_group->n_members, my_group->is_closed, my_group->max_voto);
 	#endif
     }
-
+    release_sem(sem_id, SEM_SHM);
     return my_group->is_closed;
 }
 
 void inserisci_nel_mio_gruppo(int matricola, int *is_leader) {
-    
+    int sem_id = semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
+    reserve_sem(sem_id, SEM_SHM);
     if(my_group->n_members<=1){ //non esiste ancora il gruppo
 	//creo gruppo
 	my_group->n_members=2;
@@ -442,10 +455,13 @@ void inserisci_nel_mio_gruppo(int matricola, int *is_leader) {
 	fprintf(stderr, "%s: %d. Il gruppo non può essere formato da più di 4 studenti #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
 	exit(EXIT_FAILURE);
     }
+    release_sem(sem_id, SEM_SHM);
 }
 
 void invita_studente(int destinatario){
     struct msgbuf invito;
+    int msg_id=msgget(IPC_KEY, 0666);
+    
     invito.mtype = (long)(destinatario+100);//per evitare matricole=0
     sprintf(invito.text,"Invito %d", student->matricola);
 
@@ -461,6 +477,7 @@ void invita_studente(int destinatario){
 void rifiuta_invito(int mittente, int *n_rifiutati){
     //il destinatario dell'invito è student->matricola
     struct msgbuf rifiuto;
+    int msg_id=msgget(IPC_KEY, 0666);
     
     rifiuto.mtype = (long)(mittente+100);
     sprintf(rifiuto.text,"Rifiuto %d", student->matricola);
@@ -478,6 +495,7 @@ void rifiuta_invito(int mittente, int *n_rifiutati){
 void accetta_invito(int mittente){ 
     //il destinatario dell'invito è student->matricola
     struct msgbuf accetto;
+    int msg_id = msgget(IPC_KEY, 0666);
     
     accetto.mtype = (long)(mittente+100); //mittente dell'invito
     sprintf(accetto.text,"Accetto %d", student->matricola);
