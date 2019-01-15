@@ -21,6 +21,19 @@
 #include "header/stud.h"
 
 
+int write_log(struct sim_opt opt, int voto_AdE, int voto_SO){
+    FILE *fd = fopen("logfile.log","a");
+    if(fd){
+        fprintf(fd, "\n%s, %s\n", __DATE__, __TIME__ );
+        fprintf(fd, "<%d, %d, %d, %d, %d, %d, %d, %d>\n",
+                opt.prob_2, opt.prob_3, opt.prob_4, opt.nof_invites,
+                opt.max_reject, opt.sim_time,voto_AdE, voto_SO);
+        fclose(fd);
+        return 0;
+    }
+    return -1;    
+}
+
 void print_array(int *a, int sz){
     if(a && sz>0){
         printf("Stampa array\n");
@@ -32,7 +45,7 @@ void print_array(int *a, int sz){
 }
 
 // stampa per ogni voto il numero di studenti che ha tale voto
-void print_data(int array[], int size){
+int print_data(int array[], int size){
     if(array && size>0){
         //print_array(array,size);
         printf("VOTO\tFREQUENZA\n");
@@ -49,7 +62,9 @@ void print_data(int array[], int size){
             }
         }
         printf("VOTO MEDIO = %d\n",sum/POP_SIZE);
+        return sum/POP_SIZE;
     }
+    return -1;
 }
 
 int main(){                 //codice del gestore
@@ -227,12 +242,14 @@ int main(){                 //codice del gestore
     while(waitpid(-1, NULL, 0)!=-1);
 
     //stampa dei dati della simulazione
+    int m_AdE, m_SO;
     printf("#####################################################################\n");
     printf("Gestore (PID: %d). Dati dei voti di Architettura degli Elaboratori:\n",getpid());
-    print_data(AdE,POP_SIZE);
+    m_AdE = print_data(AdE,POP_SIZE);
     printf("#####################################################################\n");
     printf("Gestore (PID: %d). Dati dei voti di Sistemi Operativi:\n",getpid());
-    print_data(SO,POP_SIZE);
+    m_SO = print_data(SO,POP_SIZE);
+    write_log(options,m_AdE,m_SO);
 
     //detach memoria condivisa
     errno=0;    //inserito solo per non far visualizzare l'errore della waitpid (è normale che dia errore), valutare un'alternativa
