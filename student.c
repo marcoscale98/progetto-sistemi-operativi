@@ -171,7 +171,7 @@ int main(int argc,char *argv[]){
     while(aula->time_left > 0) {
 	release_sem(sem_id, SEM_SHM);
 	
-	if (accettato_invito || controllo_risposte(&is_leader, invitati, n_invitati, inviti)) {	   //se tutti hanno risposto ritorna true
+	if (controllo_risposte(&is_leader, invitati, n_invitati, inviti)) {	   //se tutti hanno risposto ritorna true
 	    //reserve sul mio semaforo
 	    reserve_sem(sem_id, N_SEM+student->matricola);
 	    
