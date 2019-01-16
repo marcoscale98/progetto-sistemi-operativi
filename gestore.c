@@ -117,9 +117,11 @@ int main(){                 //codice del gestore
     //inizializzazione del semaforo di scrittura
     init_sem_available(sem_id,SEM_SHM);
     TEST_ERROR;
-    //semaforo SEM_READY inizializzato a 0: per bloccare gli studenti dopo la loro inizializzazione
-    init_sem_in_use(sem_id,SEM_READY);
+    //semaforo SEM_GO inizializzato a 0: per bloccare gli studenti dopo la loro inizializzazione
+    init_sem_in_use(sem_id,SEM_GO);
     TEST_ERROR;
+    //semaforo SEM_READY inizializzato a POPSIZE: per avvisare il gestore che tutti gli studenti sono pronti al via!
+    init_sem(sem_id, SEM_READY, POP_SIZE);
 
     //inizializzazione dei semafori degli studenti available
     int i;
@@ -151,8 +153,9 @@ int main(){                 //codice del gestore
     printf("_Gestore (PID: %d). Creati figli\n",getpid());
 #endif
     //attesa dell'inizializzazione degli studenti
-    while(get_sem_val(sem_id,SEM_READY)!=-POP_SIZE);
-
+    //while(get_sem_val(sem_id,SEM_READY)!=-POP_SIZE);
+    test_sem_zero(sem_id, SEM_READY);
+    
     //set del timer e inizio simulazione
     reserve_sem(sem_id, SEM_SHM);
     shared->time_left = options.sim_time;
@@ -162,7 +165,8 @@ int main(){                 //codice del gestore
     printf("Gestore (PID: %d). Timer inizializzato e inizio simulazione\n",getpid());
 
     //sblocco degli studenti
-    init_sem(sem_id,SEM_READY,POP_SIZE);
+    init_sem(sem_id,SEM_GO,POP_SIZE);
+    
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Studenti sbloccati\n",getpid());
 #endif

@@ -52,3 +52,12 @@ int release_sem(int semid, int semnum) {
    sops.sem_flg = 0;
    return semop(semid, &sops, 1);
 }
+
+// Test semaphore if is zero
+int test_sem_zero(int semid, int semnum) {
+   struct sembuf sops;
+   sops.sem_num = semnum;
+   sops.sem_op = 0;
+   sops.sem_flg = 0;
+   return semop(semid, &sops, 1);
+}

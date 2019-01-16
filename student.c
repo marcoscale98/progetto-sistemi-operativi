@@ -150,6 +150,7 @@ int main(int argc,char *argv[]){
     printf("_Student (PID: %d). Aspetto l'inizio della simulazione\n",getpid());
 #endif 
     reserve_sem(sem_id, SEM_READY);
+    reserve_sem(sem_id, SEM_GO);
     TEST_ERROR;
     
 #ifdef DEBUG
