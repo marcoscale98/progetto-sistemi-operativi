@@ -448,6 +448,7 @@ int chiudo_gruppo(int *is_leader) {
 
 void inserisci_nel_mio_gruppo(int matricola, int *is_leader) {
     int sem_id = semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
+    
     reserve_sem(sem_id, SEM_SHM);
     if(my_group->n_members<=1){ //non esiste ancora il gruppo
 	//creo gruppo
