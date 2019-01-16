@@ -199,6 +199,10 @@ int main(int argc,char *argv[]){
 		    }
 		}
 	    }
+	    else {
+		//valuta se chiudere il gruppo
+		chiudo_gruppo(&is_leader);
+	    }
 	    //release semaforo del mio processo
 	    release_sem(sem_id, N_SEM+student->matricola);
 	}
@@ -243,6 +247,7 @@ int controllo_risposte(int *is_leader, int *invitati, int n_invitati, int *invit
 	}
     }
     errno=0; //perchè la IPC_NOWAIT genera un errore se non trova nulla
+    
     return hanno_risposto(invitati);
 
 }
