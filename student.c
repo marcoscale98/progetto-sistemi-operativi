@@ -167,10 +167,10 @@ int main(int argc,char *argv[]){
 	inviti[i]=LIBERO;
     }
     
-    reserve_sem(sem_id, SEM_SHM);
+    //reserve_sem(sem_id, SEM_SHM);
     //STRATEGIA INVITI
     while(aula->time_left > 0) {
-	release_sem(sem_id, SEM_SHM);
+	//release_sem(sem_id, SEM_SHM);
 	
 	if (controllo_risposte(&is_leader, invitati, n_invitati, inviti)) {	   //se tutti hanno risposto ritorna true
 	    //reserve sul mio semaforo
@@ -202,7 +202,7 @@ int main(int argc,char *argv[]){
 	    //release semaforo del mio processo
 	    release_sem(sem_id, N_SEM+student->matricola);
 	}
-	reserve_sem(sem_id, SEM_SHM);
+	//reserve_sem(sem_id, SEM_SHM);
     } 
  
     //FINE SIMULAZIONE
@@ -253,7 +253,6 @@ int controllo_risposte(int *is_leader, int *invitati, int n_invitati, int *invit
 int rispondo_inviti(int *accettato, int *is_leader, int *n_rifiutati, int max_reject, int *inviti) {
     int matricola, sem_id=semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
     for(matricola=0;matricola<POP_SIZE;matricola++) {
-    #ifndef STRATEGIA_NUOVA
 	/****** STRATEGIA DI SCALE ********************************************/
 	if(inviti[matricola]==INVITATO) {
 	    inviti[matricola]=LIBERO;
@@ -287,8 +286,8 @@ int rispondo_inviti(int *accettato, int *is_leader, int *n_rifiutati, int max_re
 	    //rilascio il semaforo per la lettura e la scrittura della memoria condivisa
 	    release_sem(sem_id, SEM_SHM);
 	}
-    #else
     /****** STRATEGIA NUOVA ********************************************/
+/*
     	if(inviti[matricola]==INVITATO) {
     	    inviti[matricola]=LIBERO;
     	    if(*is_leader || *accettato || my_group->is_closed) {
@@ -297,13 +296,13 @@ int rispondo_inviti(int *accettato, int *is_leader, int *n_rifiutati, int max_re
     		rifiuta_invito(matricola, n_rifiutati);
     	    }
     	    //valuto se accettare o meno
-    	    /* accetta se non hai più rifiuti a disposizione */
+    	    //accetta se non hai più rifiuti a disposizione
     	    else if( (*n_rifiutati==max_reject) || (aula->time_left <= CRITIC_TIME) ) {
-    	    /* oppure se siamo nel CRITIC_TIME, allora accetto qualunque invito */
+    	    // oppure se siamo nel CRITIC_TIME, allora accetto qualunque invito
     		accetta_invito(matricola);
     		*accettato=TRUE;
     	    }
-    	    /* oppure se il mittente ha lo stesso nof_elems */
+    	    // oppure se il mittente ha lo stesso nof_elems
     	    else if(aula->student[matricola].nof_elems == student->nof_elems) {
 		if(student->voto_AdE < 27 && aula->student[matricola].voto_AdE > student->voto_AdE) {
 		    accetta_invito(matricola);
@@ -319,7 +318,7 @@ int rispondo_inviti(int *accettato, int *is_leader, int *n_rifiutati, int max_re
     	    else
     		rifiuta_invito(matricola, n_rifiutati);
     	}
-        #endif
+*/
     }
     return *accettato;
 }
@@ -342,15 +341,16 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
     }
     if(student->group==NOGROUP)
 	max_invites=3;
-    else
-	max_invites=4-my_group->n_members;
-	
+    else{
+	    reserve_sem(sem_id,SEM_SHM);   //mutua esclusione
+        max_invites=4-my_group->n_members;
+        release_sem(sem_id,SEM_SHM); //mutua esclusione
+	}
     //non si possono invitare più studenti di quanti ne potrebbe contenere un gruppo
     for(i=0; i<POP_SIZE && n<max_invites && *n_invitati<nof_invites; i++) {
-	reserve_sem(sem_id, SEM_SHM);
+	    //reserve_sem(sem_id, SEM_SHM);
         stud2 = &(aula->student[i]);
-	
-    #ifndef STRATEGIA_NUOVA  
+	 
 	/*************STRATEGIA DI SCALE ****************************************/
         //se sono dello stesso turno, non hanno un gruppo (imprescindibile per un invito)
         if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
@@ -379,8 +379,8 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
 		n++;
 	    }
         }
-	release_sem(sem_id, SEM_SHM);
-	#else
+	//release_sem(sem_id, SEM_SHM);
+/*
 	if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
             //se siamo nel CRITIC TIME
 	    if(aula->time_left <= CRITIC_TIME) {
@@ -405,7 +405,7 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
 		}
             }
         }
-	#endif
+*/
     }
 }
 
@@ -536,8 +536,3 @@ int hanno_risposto(int *invitati){
     }
     return ha_risposto;
 }
-
-
-
-
-
