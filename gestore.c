@@ -172,9 +172,9 @@ int main(){                 //codice del gestore
         if((int)(timer-start) == (int)(options.sim_time*(0.10*k))) {
             reserve_sem(sem_id, SEM_SHM);
             shared->time_left = options.sim_time - (int)(timer-start); //tempo rimanente
-            #ifdef DEBUG
+            //#ifdef DEBUG
             printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), shared->time_left);
-            #endif
+            //#endif
             release_sem(sem_id, SEM_SHM);
             k++;
         }

@@ -1,12 +1,4 @@
-Gestore:
-    - inserire inizializzazione memoria condivisa
-    - correggere blocco studenti a fine simulazione
-
-Studente: (Marco)
-    - testare
-    - aggiungere handler di sigusr1
-
 Varie:
-    - inserire printf
-    - testare
+    - inserire/eliminare printf
+    - se si riesce alzare il voto medio di SO
     - commentare e sistemare codice

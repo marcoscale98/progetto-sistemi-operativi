@@ -36,6 +36,5 @@ int reserve_sem(int semid, int semnum);
 // Release semaphore - incremento di 1
 int release_sem(int semid, int semnum);
 
-int reserve_sem_nowait(int semid, int semnum);
 
 #endif

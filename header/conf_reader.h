@@ -2,7 +2,7 @@
 #define _CONF_READER_H_
 
 #define MAX_VALUE 20
-#define TIME_LIMIT 120
+#define TIME_LIMIT 40
 
 //struttura che contiene tutti i dati da leggere in opt.conf
 struct sim_opt{
