@@ -68,7 +68,7 @@ int main(int argc,char *argv[]){
 
     //INIZIALIZZAZIONE IPC
     int sem_id, shm_id, msg_id;
-    sem_id = semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
+    sem_id = semget(IPC_KEY, N_SEM, 0666);
     TEST_ERROR;
     msg_id = msgget(IPC_KEY, 0666);
     TEST_ERROR;
@@ -167,14 +167,24 @@ int main(int argc,char *argv[]){
 	inviti[i]=LIBERO;
     }
     
-    //reserve_sem(sem_id, SEM_SHM);
+    //modello lettore per tempo rimanente
+    reserve_sem(sem_id, MUTEX_TIME);
+    aula->lettori_time++;
+    if(aula->lettori_time==1)
+        reserve_sem(sem_id, WRITE_TIME);
+    release_sem(sem_id,MUTEX_TIME);
+    
     //STRATEGIA INVITI
     while(aula->time_left > 0) {
-	//release_sem(sem_id, SEM_SHM);
+        reserve_sem(sem_id,MUTEX_TIME);
+        aula->lettori_time--;
+        if(aula->lettori_time==0)   
+    	   release_sem(sem_id, WRITE_TIME);
+        release_sem(sem_id,MUTEX_TIME);
 	
 	if (controllo_risposte(&is_leader, invitati, n_invitati, inviti)) {	   //se tutti hanno risposto ritorna true
 	    //reserve sul mio semaforo
-	    reserve_sem(sem_id, N_SEM+student->matricola);
+	    reserve_sem(sem_id, student->matricola);
 	    
 	    accettato_invito = rispondo_inviti(&accettato_invito, &is_leader, &n_rifiutati, max_reject, inviti);
 
@@ -186,13 +196,13 @@ int main(int argc,char *argv[]){
 		for(j=0;j<POP_SIZE;j++) {
 		    if(invitati[j]==DA_INVITARE) {
 			//controllo se posso invitarlo
-			if(get_sem_val(sem_id, N_SEM+j)==1) {
+			if(get_sem_val(sem_id, j)==1) {
 			    //semaforo reserve su chi voglio invitare
-			    reserve_sem(sem_id, N_SEM+j);
+			    reserve_sem(sem_id, j);
 			    invita_studente(j);
 			    invitati[j]=INVITATO;
 			    //release semaforo su chi ho invitato
-			    release_sem(sem_id, N_SEM+j);
+			    release_sem(sem_id, j);
 			}
 			//altrimenti provo ad invitare gli altri
 			//altrimenti esco e vado a rispondere agli inviti
@@ -200,10 +210,20 @@ int main(int argc,char *argv[]){
 		}
 	    }
 	    //release semaforo del mio processo
-	    release_sem(sem_id, N_SEM+student->matricola);
+	    release_sem(sem_id,student->matricola);
 	}
-	//reserve_sem(sem_id, SEM_SHM);
-    } 
+    	//modello lettore per tempo rimanente
+        reserve_sem(sem_id, MUTEX_TIME);
+        aula->lettori_time++;
+        if(aula->lettori_time==1)
+            reserve_sem(sem_id, WRITE_TIME);
+        release_sem(sem_id,MUTEX_TIME);
+    }/*
+    reserve_sem(sem_id,MUTEX_TIME);
+        aula->lettori_time--;
+        if(aula->lettori_time==0)   
+           release_sem(sem_id, WRITE_TIME);
+        release_sem(sem_id,MUTEX_TIME);*/
  
     //FINE SIMULAZIONE
     sleep(5); //aspetta il voto dal gestore
@@ -251,14 +271,26 @@ int controllo_risposte(int *is_leader, int *invitati, int n_invitati, int *invit
 //return true se accetta un invito
 //return false se non accetta
 int rispondo_inviti(int *accettato, int *is_leader, int *n_rifiutati, int max_reject, int *inviti) {
-    int matricola, sem_id=semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
+    int matricola, sem_id=semget(IPC_KEY, N_SEM, 0666);
     for(matricola=0;matricola<POP_SIZE;matricola++) {
 	/****** STRATEGIA DI SCALE ********************************************/
 	if(inviti[matricola]==INVITATO) {
 	    inviti[matricola]=LIBERO;
-	    //riservo il semaforo per lettura e scrittura della memoria condivisa
-	    reserve_sem(sem_id, SEM_SHM);
-	    
+
+        //modello lettore per il gruppo
+        reserve_sem(sem_id, MUTEX_GROUP);
+        aula->lettori_group++;
+        if(aula->lettori_group==1)
+            reserve_sem(sem_id, WRITE_GROUP);
+        release_sem(sem_id,MUTEX_GROUP);
+
+        //modello lettore per tempo rimanente
+        reserve_sem(sem_id, MUTEX_TIME);
+        aula->lettori_time++;
+        if(aula->lettori_time==1)
+            reserve_sem(sem_id, WRITE_TIME);
+        release_sem(sem_id,MUTEX_TIME);
+
 	    if(*is_leader || *accettato || my_group->is_closed) {
 		    //il leader non può accettare inviti
 		    //se ho già accettato un invito, gli altri li rifiuto
@@ -283,8 +315,18 @@ int rispondo_inviti(int *accettato, int *is_leader, int *n_rifiutati, int max_re
 	    else {
 		rifiuta_invito(matricola, n_rifiutati);
 	    }
-	    //rilascio il semaforo per la lettura e la scrittura della memoria condivisa
-	    release_sem(sem_id, SEM_SHM);
+
+        reserve_sem(sem_id,MUTEX_TIME);
+        aula->lettori_time--;
+        if(aula->lettori_time==0)   
+           release_sem(sem_id, WRITE_TIME);
+        release_sem(sem_id,MUTEX_TIME);
+
+	    reserve_sem(sem_id,MUTEX_GROUP);
+        aula->lettori_group--;
+        if(aula->lettori_group==0)   
+           release_sem(sem_id, WRITE_GROUP);
+        release_sem(sem_id,MUTEX_GROUP);
 	}
     /****** STRATEGIA NUOVA ********************************************/
 /*
@@ -333,42 +375,57 @@ int max(int num1, int num2) {
 void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
     struct info_student *stud2;
     int i, max_invites, n=0;//n conta gli inviti fatti durante questa chiamata di funzione
-    int sem_id=semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
+    int sem_id=semget(IPC_KEY, N_SEM, 0666);
     
+    //modello lettore per il gruppo
+    reserve_sem(sem_id, MUTEX_GROUP);
+    aula->lettori_group++;
+    if(aula->lettori_group==1)
+        reserve_sem(sem_id, WRITE_GROUP);
+    release_sem(sem_id,MUTEX_GROUP);
+
     for(i=0;i<POP_SIZE;i++) {
+
 	if(invitati[i]==DA_INVITARE) 
 	    n++;
     }
     if(student->group==NOGROUP)
 	max_invites=3;
     else{
-	    reserve_sem(sem_id,SEM_SHM);   //mutua esclusione
+        
         max_invites=4-my_group->n_members;
-        release_sem(sem_id,SEM_SHM); //mutua esclusione
+        
 	}
     //non si possono invitare più studenti di quanti ne potrebbe contenere un gruppo
     for(i=0; i<POP_SIZE && n<max_invites && *n_invitati<nof_invites; i++) {
-	    //reserve_sem(sem_id, SEM_SHM);
+
         stud2 = &(aula->student[i]);
 	 
 	/*************STRATEGIA DI SCALE ****************************************/
         //se sono dello stesso turno, non hanno un gruppo (imprescindibile per un invito)
         if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
             
+            //modello lettore per tempo rimanente
+            reserve_sem(sem_id, MUTEX_TIME);
+            aula->lettori_time++;
+            if(aula->lettori_time==1)
+                reserve_sem(sem_id, WRITE_TIME);
+            release_sem(sem_id,MUTEX_TIME);
+
             //se hanno la stessa preferenza di nof_elems
             if(stud2->nof_elems==student->nof_elems) {
                 
                 //se stud2.voto > mio.voto
                 if(stud2->voto_AdE > (student->voto_AdE)){
-		    invitati[stud2->matricola]=DA_INVITARE;
-		    n_invitati++;
-		    n++;
-		}
-		else if(aula->time_left <= CRITIC_TIME) {
-		    invitati[stud2->matricola]=DA_INVITARE;
-		    n_invitati++;
-		    n++;
-		}
+    		    invitati[stud2->matricola]=DA_INVITARE;
+    		    n_invitati++;
+    		    n++;
+    		    }
+		        else if(aula->time_left <= CRITIC_TIME) {
+        		    invitati[stud2->matricola]=DA_INVITARE;
+        		    n_invitati++;
+        		    n++;
+		        }
             }
 	    
 	    //se non hanno la mia stessa preferenza di nof_elems e siamo nel CRITIC TIME
@@ -379,7 +436,12 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
 		n++;
 	    }
         }
-	//release_sem(sem_id, SEM_SHM);
+        reserve_sem(sem_id,MUTEX_TIME);
+        aula->lettori_time--;
+        if(aula->lettori_time==0)   
+           release_sem(sem_id, WRITE_TIME);
+        release_sem(sem_id,MUTEX_TIME);
+
 /*
 	if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
             //se siamo nel CRITIC TIME
@@ -407,6 +469,12 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
         }
 */
     }
+
+    reserve_sem(sem_id,MUTEX_GROUP);
+    aula->lettori_group--;
+    if(aula->lettori_group==0)   
+       release_sem(sem_id, WRITE_GROUP);
+    release_sem(sem_id,MUTEX_GROUP);
 }
 
 //confronta le matricole di 2 studenti e verifica siano nello stesso turno
@@ -416,9 +484,18 @@ int stesso_turno (struct info_student *mat1, struct info_student *mat2) {
 
 //decido se conviene chiudere il gruppo(return true) oppure no(return false)
 int chiudo_gruppo(int *is_leader) {
-    int sem_id=semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
-    reserve_sem(sem_id, SEM_SHM);
+    int sem_id=semget(IPC_KEY, N_SEM, 0666);
+
+    //modello lettore per tempo rimanente
+    reserve_sem(sem_id, MUTEX_TIME);
+    aula->lettori_time++;
+    if(aula->lettori_time==1)
+        reserve_sem(sem_id, WRITE_TIME);
+    release_sem(sem_id,MUTEX_TIME);
     
+    //modello scrittore per il gruppo
+    reserve_sem(sem_id, MUTEX_GROUP);
+
     //se è già chiuso il gruppo, non si fa nulla
     if (my_group->is_closed);
     else if(my_group->n_members==4 || my_group->n_members==student->nof_elems || aula->time_left <= (CLOSING_TIME)) {
@@ -443,14 +520,25 @@ int chiudo_gruppo(int *is_leader) {
 		   student->group,my_group->n_members, my_group->is_closed, my_group->max_voto);
 	#endif
     }
-    release_sem(sem_id, SEM_SHM);
-    return my_group->is_closed;
+    int closed = my_group->is_closed;
+
+    release_sem(sem_id,MUTEX_GROUP);
+
+    reserve_sem(sem_id,MUTEX_TIME);
+    aula->lettori_time--;
+    if(aula->lettori_time==0)   
+       release_sem(sem_id, WRITE_TIME);
+    release_sem(sem_id,MUTEX_TIME);
+
+    return closed;
 }
 
 void inserisci_nel_mio_gruppo(int matricola, int *is_leader) {
-    int sem_id = semget(IPC_KEY, N_SEM+POP_SIZE, 0666);
+    int sem_id = semget(IPC_KEY, N_SEM, 0666);
     
-    reserve_sem(sem_id, SEM_SHM);
+    //modello scrittore per il gruppo
+    reserve_sem(sem_id, MUTEX_GROUP);
+
     if(my_group->n_members<=1){ //non esiste ancora il gruppo
 	//creo gruppo
 	my_group->n_members=2;
@@ -471,7 +559,8 @@ void inserisci_nel_mio_gruppo(int matricola, int *is_leader) {
 	fprintf(stderr, "%s: %d. Il gruppo non può essere formato da più di 4 studenti #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
 	exit(EXIT_FAILURE);
     }
-    release_sem(sem_id, SEM_SHM);
+    
+    release_sem(sem_id,MUTEX_GROUP);
 }
 
 void invita_studente(int destinatario){

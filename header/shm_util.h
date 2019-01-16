@@ -31,6 +31,10 @@ struct info_sim {
     struct info_student student[POP_SIZE];
     struct info_group group[POP_SIZE];
     int time_left;  //CRITICO
+    //conta i lettori di group e di student[...].group
+    int lettori_group;  //CRITICO
+    //conta i lettori del tempo
+    int lettori_time;   //CRITICO
 };
 
 #endif
