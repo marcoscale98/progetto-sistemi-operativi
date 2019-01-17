@@ -99,7 +99,7 @@ int main(){                 //codice del gestore
 
     //creazione ipc
     int sem_id, shm_id, msg_id;
-    sem_id = semget(IPC_KEY,N_SEM+POP_SIZE,IPC_CREAT|IPC_EXCL|0666);
+    sem_id = semget(IPC_KEY,N_SEM,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
     msg_id = msgget(IPC_KEY, IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
@@ -114,27 +114,32 @@ int main(){                 //codice del gestore
         exit(EXIT_FAILURE);
     }
     
-    //inizializzazione del semaforo di scrittura
-    init_sem_available(sem_id,SEM_SHM);
+    //inizializzazione dei semafori
+    init_sem_available(sem_id,MUTEX_TIME);
+    TEST_ERROR;
+    init_sem_available(sem_id,MUTEX_GROUP);
+    TEST_ERROR;
+    init_sem_available(sem_id,WRITE_TIME);
+    TEST_ERROR;
+    init_sem_available(sem_id,WRITE_GROUP);
     TEST_ERROR;
     //semaforo SEM_GO inizializzato a 0: per bloccare gli studenti dopo la loro inizializzazione
     init_sem_in_use(sem_id,SEM_GO);
     TEST_ERROR;
     //semaforo SEM_READY inizializzato a POPSIZE: per avvisare il gestore che tutti gli studenti sono pronti al via!
     init_sem(sem_id, SEM_READY, POP_SIZE);
+    TEST_ERROR;
 
-    //inizializzazione dei semafori degli studenti available
-    int i;
-    for(i=0;i<POP_SIZE;i++) {
-        init_sem_available(sem_id,N_SEM+i);
-        TEST_ERROR;
-    }
+    //inizializzazione memoria condivisa
+    shared->time_left = options.sim_time;
+    shared->lettori_group = 0;
+    shared->lettori_time = 0;
 
 #ifdef DEBUG
     printf("Gestore (PID: %d). Create IPCS e inizializzate\n",getpid());
 #endif
     //creazione dei figli
-    int value; 
+    int value, i; 
     for(i=0, value=-1;value && i<POP_SIZE;i++){
         switch(value = fork()){
             case -1:
@@ -146,6 +151,9 @@ int main(){                 //codice del gestore
                 printf("ERRORE: PID= %d, %s, %d. Invocazione di execvp fallita\n",getpid(),__FILE__,__LINE__);
                 break;
             default:
+                //inizializzazione dei semafori degli studenti available
+                init_sem_available(sem_id,i);
+                TEST_ERROR;
                 break;
         }    
     }
@@ -157,9 +165,6 @@ int main(){                 //codice del gestore
     test_sem_zero(sem_id, SEM_READY);
     
     //set del timer e inizio simulazione
-    reserve_sem(sem_id, SEM_SHM);
-    shared->time_left = options.sim_time;
-    release_sem(sem_id, SEM_SHM);
     time_t start=time(NULL), timer;
     TEST_ERROR;
     printf("Gestore (PID: %d). Timer inizializzato e inizio simulazione\n",getpid());
@@ -174,12 +179,12 @@ int main(){                 //codice del gestore
     while((int)(time(&timer)-start) < options.sim_time) {
         //il timer si aggiorna ogni 10% di sim_time
         if((int)(timer-start) == (int)(options.sim_time*(0.10*k))) {
-            reserve_sem(sem_id, SEM_SHM);
+            reserve_sem(sem_id, MUTEX_TIME);
             shared->time_left = options.sim_time - (int)(timer-start); //tempo rimanente
             //#ifdef DEBUG
             printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), shared->time_left);
             //#endif
-            release_sem(sem_id, SEM_SHM);
+            release_sem(sem_id, MUTEX_TIME);
             k++;
         }
     }

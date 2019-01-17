@@ -23,7 +23,7 @@ int controllo_risposte(int *is_leader, int *invitati, int n_invitati, int *invit
 //controlla gli inviti ricevuti e li valuta
 //return true se accetta un invito
 //return false se non accetta
-int rispondo_inviti(int *accettato, int *is_leader,int *n_rifiutati, int max_reject, int *inviti);
+int rispondo_inviti(int *accettato, int *is_leader,int *n_rifiutati, int max_reject, int *inviti, int hanno_risposto);
 
 int max(int num1, int num2);
 
@@ -39,7 +39,7 @@ void inserisci_nel_mio_gruppo(int matricola, int *is_leader);
 
 void invita_studente(int destinatario);
 
-void rifiuta_invito(int mittente, int *n_rifiutati);
+void rifiuta_invito(int mittente);
 
 void accetta_invito(int mittente);
 
