@@ -10,6 +10,7 @@
 #include <sys/msg.h>
 #include <sys/shm.h>
 #include <sys/wait.h>
+#include <time.h>
 #include "header/error.h"
 #include "header/conf_reader.h"
 #include "header/sem_util.h"
@@ -19,6 +20,18 @@
 #include "header/config.h"
 #include "header/stud.h"
 
+int write_log(struct sim_opt opt, int voto_AdE, int voto_SO){
+    FILE *fd = fopen("logfile.log","a");
+    if(fd){
+        fprintf(fd, "\n%s, %s\n", __DATE__, __TIME__);
+        fprintf(fd, "<%d, %d, %d, %d, %d, %d, %d, %d, %d>\n",
+                POP_SIZE, opt.prob_2, opt.prob_3, opt.prob_4, opt.nof_invites,
+                opt.max_reject, opt.sim_time,voto_AdE, voto_SO);
+        fclose(fd);
+        return 0;
+    }
+    return -1;    
+}
 
 void print_array(int *a, int sz){
     if(a && sz>0){
@@ -31,7 +44,7 @@ void print_array(int *a, int sz){
 }
 
 // stampa per ogni voto il numero di studenti che ha tale voto
-void print_data(int array[], int size){
+int print_data(int array[], int size){
     if(array && size>0){
         //print_array(array,size);
         printf("VOTO\tFREQUENZA\n");
@@ -48,7 +61,9 @@ void print_data(int array[], int size){
             }
         }
         printf("VOTO MEDIO = %d\n",sum/POP_SIZE);
+        return sum/POP_SIZE;
     }
+    return -1;
 }
 
 int main(){                 //codice del gestore
@@ -129,8 +144,9 @@ int main(){                 //codice del gestore
     while(get_sem_val(sem_id,SEM_READY)!=-POP_SIZE);
 
     //set del timer e inizio simulazione
-    shared->time_left = options.sim_time;
-    set_timer(options.sim_time);
+    shared->time_left=options.sim_time;
+    time_t start=time(NULL), timer;
+    TEST_ERROR;
     printf("Gestore (PID: %d). Timer inizializzato e inizio simulazione\n",getpid());
 
     //sblocco degli studenti
@@ -139,15 +155,25 @@ int main(){                 //codice del gestore
     printf("_Gestore (PID: %d). Studenti sbloccati\n",getpid());
 #endif
 
-    //ciclo di aggiornamento time_left
-    while(time_left()>0){
-        shared->time_left = time_left();
-    #ifdef DEBUG
-        printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), time_left());
-    #endif
-        sleep(5);
-    } //allo scattare del timer verrà invocato l'handler
-    shared->time_left = 0;
+    int k=1;
+    while((int)(time(&timer)-start) < options.sim_time) {
+        //il timer si aggiorna ogni 10% di sim_time
+        if((int)(timer-start) == (int)(options.sim_time*(0.10*k))) {
+            shared->time_left = options.sim_time - (int)(timer-start); //tempo rimanente
+            //#ifdef DEBUG
+            printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), shared->time_left);
+            //#endif
+            k++;
+        }
+    }
+    printf("Gestore (PID: %d). Tempo scaduto! Gli studenti si fermino\n",getpid());
+    struct sigaction sa;
+    sa.sa_handler = SIG_IGN;    //fa ignorare al gestore il segnale sigusr1
+    sigaction(SIGUSR1,&sa,NULL);
+    TEST_ERROR;
+    killpg(0,SIGUSR1);
+    TEST_ERROR;
+    shared->time_left=0;
 
     //pulizia della coda dei messaggi
     struct msgbuf message;
@@ -190,22 +216,25 @@ int main(){                 //codice del gestore
     }
 
     //aspetto che gli studenti abbiano ricevuto e stampato i voti
-    waitpid(-1, NULL, 0);
-
+    while(waitpid(-1, NULL, 0)!=-1);
+    errno=0;    //inserito solo per non far visualizzare l'errore della waitpid (è normale che dia errore)
+    
     //stampa dei dati della simulazione
-    printf("Gestore (PID: %d). Dati dei voti di Architettura degli Elaboratori\n",getpid());
-    print_data(AdE,POP_SIZE);
-    printf("Gestore (PID: %d). Dati dei voti di Sistemi Operativi\n",getpid());
-    print_data(SO,POP_SIZE);
+    int m_AdE, m_SO;
+    printf("#####################################################################\n");
+    printf("Gestore (PID: %d). Dati dei voti di Architettura degli Elaboratori:\n",getpid());
+    m_AdE = print_data(AdE,POP_SIZE);
+    printf("#####################################################################\n");
+    printf("Gestore (PID: %d). Dati dei voti di Sistemi Operativi:\n",getpid());
+    m_SO = print_data(SO,POP_SIZE);
+    write_log(options,m_AdE,m_SO);
 
     //detach memoria condivisa
     shmdt(shared);
     TEST_ERROR;
 
     //rimozione ipc
-    semctl(sem_id, SEM_READY, IPC_RMID);
-    TEST_ERROR;
-    semctl(sem_id, SEM_SHM, IPC_RMID); 
+    semctl(sem_id, 0, IPC_RMID);
     TEST_ERROR;
     shmctl(shm_id,IPC_RMID,NULL);
     TEST_ERROR;
