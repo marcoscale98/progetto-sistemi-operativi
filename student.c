@@ -174,7 +174,7 @@ int main(int argc,char *argv[]){
     }
 
     //STRATEGIA INVITI
-    while(aula->time_left > 0) {
+    while(1) { //fino a quando il tempo non scade
         reserve_sem(sem_id, SEM_SHM);
 	//#ifdef DEBUG
 	    //printf("Student (PID: %d) può mandare gli inviti\n", getpid());
