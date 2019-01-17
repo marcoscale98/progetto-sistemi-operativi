@@ -101,7 +101,7 @@ int main(int argc,char *argv[]){
         
     student->matricola = atoi(argv[1]);
     student->group = NOGROUP;
-    student->leader=FALSE;
+    int is_leader=FALSE;
  /*   
 #ifdef DEBUG
     printf("_Student (PID: %d). prima parte inizializzazione fatta\n",getpid());
@@ -179,11 +179,11 @@ int main(int argc,char *argv[]){
 	//#ifdef DEBUG
 	    //printf("Student (PID: %d) può mandare gli inviti\n", getpid());
 	//#endif
-	if (controllo_risposte(invitati, n_invitati, inviti)) {//se tutti hanno risposto
+	if (controllo_risposte(invitati, n_invitati, inviti, &is_leader)) {//se tutti hanno risposto
 	    //se leader true rifiuta gli inviti
 	    //se ho già accettato un invito, rifiuto i successivi
 	    //se il mio gruppo è chiuso, rifiuto gli inviti
-	    accettato_invito = rispondo_inviti(&accettato_invito, &n_rifiutati, max_reject, inviti);
+	    accettato_invito = rispondo_inviti(&accettato_invito, &n_rifiutati, max_reject, inviti, &is_leader);
 
 	    if (!accettato_invito && !chiudo_gruppo()) {
 		mando_inviti(invitati, &n_invitati, nof_invites);
@@ -204,7 +204,7 @@ int main(int argc,char *argv[]){
 //controlla se ha ricevuto risposta agli inviti
 //return true se tutti hanno risposto
 //return false se qualcuno non ha risposto
-int controllo_risposte(int *invitati, int n_invitati, int *inviti) {
+int controllo_risposte(int *invitati, int n_invitati, int *inviti, int *is_leader) {
     struct msgbuf risposta;
     char messaggio[32];
     int mittente;
@@ -213,7 +213,7 @@ int controllo_risposte(int *invitati, int n_invitati, int *inviti) {
     while(msgrcv(msg_id, &risposta, sizeof(risposta.text), (long)(student->matricola+100), IPC_NOWAIT)!=-1){ //i messaggi non vengono eliminati dalla coda: per permettere di leggere anche gli inviti
 	sscanf(risposta.text,"%s %d", messaggio, &mittente);
 	if(strcmp("Accetto",messaggio)==0){
-	    inserisci_nel_mio_gruppo(mittente);
+	    inserisci_nel_mio_gruppo(mittente, is_leader);
 	    invitati[mittente]=RISPOSTO;
 	    #ifdef DEBUG
 		printf("Informazioni aggiornate gruppo n. %d\n"\
@@ -240,12 +240,12 @@ int controllo_risposte(int *invitati, int n_invitati, int *inviti) {
 //controlla gli inviti ricevuti e li valuta
 //return true se accetta un invito
 //return false se non accetta
-int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject, int *inviti) {
+int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject, int *inviti, int *is_leader) {
     int matricola;
     for(matricola=0;matricola<POP_SIZE;matricola++) {
 	if(inviti[matricola]==INVITATO) {
 	    inviti[matricola]=LIBERO;
-	    if(student->leader || *accettato || my_group->is_closed) {
+	    if(*is_leader || *accettato || my_group->is_closed) {
 		//il leader non può accettare inviti
 		//se ho già accettato un invito, gli altri li rifiuto
 		rifiuta_invito(matricola, n_rifiutati);
@@ -327,7 +327,7 @@ int stesso_turno (struct info_student *mat1, struct info_student *mat2) {
 }
 
 //decido se conviene chiudere il gruppo(return true) oppure no(return false)
-int chiudo_gruppo() {
+int chiudo_gruppo(int *is_leader) {
     
     //se è già chiuso il gruppo, non si fa nulla
     if (my_group->is_closed);
@@ -340,11 +340,11 @@ int chiudo_gruppo() {
 	    my_group->max_voto=student->voto_AdE;
 	    //modifico mie variabili studente
 	    student->group=student->matricola;
-	    student->leader=TRUE;
+	    *is_leader=TRUE;
 	}
 	//chiudo il gruppo (anche se manca poco tempo)
 	my_group->is_closed=TRUE;
-	student->leader=TRUE;
+	*is_leader=TRUE;
 	#ifdef DEBUG
 	    printf("Il gruppo numero %d è stato chiuso dal leader.\n"\
 		   "Informazioni aggiornate del gruppo\n"\
@@ -358,7 +358,7 @@ int chiudo_gruppo() {
     return my_group->is_closed;
 }
 
-void inserisci_nel_mio_gruppo(int matricola) {
+void inserisci_nel_mio_gruppo(int matricola, int *is_leader) {
     
     if(my_group->n_members<=1){ //non esiste ancora il gruppo
 	//creo gruppo
@@ -366,7 +366,7 @@ void inserisci_nel_mio_gruppo(int matricola) {
 	my_group->max_voto=max(student->voto_AdE, aula->student[matricola].voto_AdE);
 	//modifico mie variabili studente
 	student->group=student->matricola;
-	student->leader=TRUE;
+	*is_leader=TRUE;
 	//modifico variabili altro student
 	aula->student[matricola].group=student->matricola;
     }

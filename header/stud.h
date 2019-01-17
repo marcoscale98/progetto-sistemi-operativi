@@ -13,12 +13,12 @@ struct msgbuf{
 //controlla se ha ricevuto risposta agli inviti
 //return true se tutti hanno risposto
 //return false se qualcuno non ha risposto
-int controllo_risposte(int *invitati, int n_invitati, int *inviti);
+int controllo_risposte(int *invitati, int n_invitati, int *inviti, int *is_leader);
 
 //controlla gli inviti ricevuti e li valuta
 //return true se accetta un invito
 //return false se non accetta
-int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject, int *inviti);
+int rispondo_inviti(int *accettato, int *n_rifiutati, int max_reject, int *inviti, int *is_leader);
 
 int max(int num1, int num2);
 
@@ -30,7 +30,7 @@ int stesso_turno (struct info_student *mat1, struct info_student *mat2);
 //decido se conviene chiudere il gruppo(return true) oppure no(return false)
 int chiudo_gruppo();
 
-void inserisci_nel_mio_gruppo(int matricola);
+void inserisci_nel_mio_gruppo(int matricola, int *is_leader);
 
 void invita_studente(int destinatario, int *invitati, int *n_invitati);
 
