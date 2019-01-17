@@ -175,16 +175,10 @@ int main(int argc,char *argv[]){
     release_sem(sem_id,MUTEX_TIME);
     
     //STRATEGIA INVITI
-    while(aula->time_left > 0) {
-        reserve_sem(sem_id,MUTEX_TIME);
-        aula->lettori_time--;
-        if(aula->lettori_time==0)   
-    	   release_sem(sem_id, WRITE_TIME);
-        release_sem(sem_id,MUTEX_TIME);
-	
-	chiudo_gruppo(&is_leader);
+    while(1) {
 	
 	int hanno_risp = controllo_risposte(&is_leader, invitati, n_invitati, inviti); //se tutti hanno risposto ritorna true
+	
 	//reserve sul mio semaforo
 	reserve_sem(sem_id, student->matricola);
 
@@ -213,13 +207,6 @@ int main(int argc,char *argv[]){
 	}
 	//release semaforo del mio processo
 	release_sem(sem_id,student->matricola);
-
-    	//modello lettore per tempo rimanente
-        reserve_sem(sem_id, MUTEX_TIME);
-        aula->lettori_time++;
-        if(aula->lettori_time==1)
-            reserve_sem(sem_id, WRITE_TIME);
-        release_sem(sem_id,MUTEX_TIME);
     }/*
     reserve_sem(sem_id,MUTEX_TIME);
         aula->lettori_time--;
@@ -375,7 +362,7 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
 	 
 	/*************STRATEGIA DI SCALE ****************************************/
         //se sono dello stesso turno, non hanno un gruppo (imprescindibile per un invito)
-        if(stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
+        if(stesso_turno(stud2, student) && stud2->group==NOGROUP /*&& invitati[stud2->matricola]==LIBERO*/) {
             
             //modello lettore per tempo rimanente
             reserve_sem(sem_id, MUTEX_TIME);
