@@ -20,20 +20,6 @@
 #include "header/config.h"
 #include "header/stud.h"
 
-
-int write_log(struct sim_opt opt, int voto_AdE, int voto_SO){
-    FILE *fd = fopen("logfile.log","a");
-    if(fd){
-        fprintf(fd, "\n%s, %s\n", __DATE__, __TIME__);
-        fprintf(fd, "<%d, %d, %d, %d, %d, %d, %d, %d, %d>\n",
-                POP_SIZE, opt.prob_2, opt.prob_3, opt.prob_4, opt.nof_invites,
-                opt.max_reject, opt.sim_time,voto_AdE, voto_SO);
-        fclose(fd);
-        return 0;
-    }
-    return -1;    
-}
-
 void print_array(int *a, int sz){
     if(a && sz>0){
         printf("Stampa array\n");
@@ -45,7 +31,7 @@ void print_array(int *a, int sz){
 }
 
 // stampa per ogni voto il numero di studenti che ha tale voto
-int print_data(int array[], int size){
+void print_data(int array[], int size){
     if(array && size>0){
         //print_array(array,size);
         printf("VOTO\tFREQUENZA\n");
@@ -62,9 +48,7 @@ int print_data(int array[], int size){
             }
         }
         printf("VOTO MEDIO = %d\n",sum/POP_SIZE);
-        return sum/POP_SIZE;
     }
-    return -1;
 }
 
 int main(){                 //codice del gestore
@@ -99,7 +83,7 @@ int main(){                 //codice del gestore
 
     //creazione ipc
     int sem_id, shm_id, msg_id;
-    sem_id = semget(IPC_KEY,N_SEM,IPC_CREAT|IPC_EXCL|0666);
+    sem_id = semget(IPC_KEY,N_SEM+POP_SIZE,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
     msg_id = msgget(IPC_KEY, IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
@@ -114,32 +98,23 @@ int main(){                 //codice del gestore
         exit(EXIT_FAILURE);
     }
     
-    //inizializzazione dei semafori
-    init_sem_available(sem_id,MUTEX_TIME);
+    //inizializzazione del semaforo di scrittura
+    init_sem_available(sem_id,SEM_SHM);
     TEST_ERROR;
-    init_sem_available(sem_id,MUTEX_GROUP);
-    TEST_ERROR;
-    init_sem_available(sem_id,WRITE_TIME);
-    TEST_ERROR;
-    init_sem_available(sem_id,WRITE_GROUP);
-    TEST_ERROR;
-    //semaforo SEM_GO inizializzato a 0: per bloccare gli studenti dopo la loro inizializzazione
-    init_sem_in_use(sem_id,SEM_GO);
-    TEST_ERROR;
-    //semaforo SEM_READY inizializzato a POPSIZE: per avvisare il gestore che tutti gli studenti sono pronti al via!
-    init_sem(sem_id, SEM_READY, POP_SIZE);
+    //semaforo SEM_READY inizializzato a 0: per bloccare gli studenti dopo la loro inizializzazione
+    init_sem_in_use(sem_id,SEM_READY);
     TEST_ERROR;
 
-    //inizializzazione memoria condivisa
-    shared->time_left = options.sim_time;
-    shared->lettori_group = 0;
-    shared->lettori_time = 0;
+    //inizializzazione dei semafori degli studenti available
+    int i=0;
+    for(;i<POP_SIZE;i++)
+        init_sem_available(sem_id,2+i);
 
 #ifdef DEBUG
     printf("Gestore (PID: %d). Create IPCS e inizializzate\n",getpid());
 #endif
     //creazione dei figli
-    int value, i; 
+    int value; 
     for(i=0, value=-1;value && i<POP_SIZE;i++){
         switch(value = fork()){
             case -1:
@@ -151,9 +126,6 @@ int main(){                 //codice del gestore
                 printf("ERRORE: PID= %d, %s, %d. Invocazione di execvp fallita\n",getpid(),__FILE__,__LINE__);
                 break;
             default:
-                //inizializzazione dei semafori degli studenti available
-                init_sem_available(sem_id,i);
-                TEST_ERROR;
                 break;
         }    
     }
@@ -161,17 +133,16 @@ int main(){                 //codice del gestore
     printf("_Gestore (PID: %d). Creati figli\n",getpid());
 #endif
     //attesa dell'inizializzazione degli studenti
-    //while(get_sem_val(sem_id,SEM_READY)!=-POP_SIZE);
-    test_sem_zero(sem_id, SEM_READY);
-    
+    while(get_sem_val(sem_id,SEM_READY)!=-POP_SIZE);
+
     //set del timer e inizio simulazione
+    shared->time_left = options.sim_time;
     time_t start=time(NULL), timer;
     TEST_ERROR;
     printf("Gestore (PID: %d). Timer inizializzato e inizio simulazione\n",getpid());
 
     //sblocco degli studenti
-    init_sem(sem_id,SEM_GO,POP_SIZE);
-    
+    init_sem(sem_id,SEM_READY,POP_SIZE);
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Studenti sbloccati\n",getpid());
 #endif
@@ -179,12 +150,10 @@ int main(){                 //codice del gestore
     while((int)(time(&timer)-start) < options.sim_time) {
         //il timer si aggiorna ogni 10% di sim_time
         if((int)(timer-start) == (int)(options.sim_time*(0.10*k))) {
-            reserve_sem(sem_id, MUTEX_TIME);
             shared->time_left = options.sim_time - (int)(timer-start); //tempo rimanente
-            //#ifdef DEBUG
+            #ifdef DEBUG
             printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), shared->time_left);
-            //#endif
-            release_sem(sem_id, MUTEX_TIME);
+            #endif
             k++;
         }
     }
@@ -196,7 +165,23 @@ int main(){                 //codice del gestore
     killpg(0,SIGUSR1);
     TEST_ERROR;
     shared->time_left=0;
- 
+    
+/*********************************************************************************
+ * 
+ * SE STA FACENDO LA TIME_LEFT E SCATTA IL TIMER NON VIENE INVIATO IL SEGNALE AGLI STUDENTI
+ * 
+ * **********************************************************************************/
+ /*
+    //ciclo di aggiornamento time_left
+    while(shared->time_left>0){
+        shared->time_left = time_left();
+    //#ifdef DEBUG
+        printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), shared->time_left);
+    //#endif
+        sleep(UPDATE_TIME);
+    } //allo scattare del timer verrà invocato l'handler
+    shared->time_left = 0;
+*/
     //pulizia della coda dei messaggi
     struct msgbuf message;
     while(msgrcv(msg_id,&message,sizeof(message.text),(long)0,IPC_NOWAIT)!=-1);
@@ -239,31 +224,17 @@ int main(){                 //codice del gestore
 
     //aspetto che gli studenti abbiano ricevuto e stampato i voti
     while(waitpid(-1, NULL, 0)!=-1);
-    errno=0;    //inserito solo per non far visualizzare l'errore della waitpid (è normale che dia errore)
-
-    for(i=0;i<POP_SIZE;i++){
-        if(shared->group[i].n_members!=0)
-            printf("Informazioni gruppo n°%d, is_closed: %d\n", i, shared->group[i].is_closed);
-        int j;
-        for(j=0;j<POP_SIZE;j++){
-            if(shared->student[j].group==i)
-                printf("- matricola: %d, nof_elems: %d, voto_AdE: %d\n",shared->student[j].matricola,shared->student[j].nof_elems,
-                    shared->student[j].voto_AdE);
-        }
-        printf("\n");
-    }
 
     //stampa dei dati della simulazione
-    int m_AdE, m_SO;
     printf("#####################################################################\n");
     printf("Gestore (PID: %d). Dati dei voti di Architettura degli Elaboratori:\n",getpid());
-    m_AdE = print_data(AdE,POP_SIZE);
+    print_data(AdE,POP_SIZE);
     printf("#####################################################################\n");
     printf("Gestore (PID: %d). Dati dei voti di Sistemi Operativi:\n",getpid());
-    m_SO = print_data(SO,POP_SIZE);
-    write_log(options,m_AdE,m_SO);
+    (SO,POP_SIZE);
 
     //detach memoria condivisa
+    errno=0;    //inserito solo per non far visualizzare l'errore della waitpid (è normale che dia errore), valutare un'alternativa
     shmdt(shared);
     TEST_ERROR;
 

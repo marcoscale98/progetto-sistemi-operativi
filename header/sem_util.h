@@ -3,27 +3,11 @@
 
 #include <sys/types.h>
 #include <sys/sem.h>
-#include "config.h"
 
-//definizione visuale dei semafori ready, per la memoria condivisa di info_student e gruppo
-//i semafori precedenti sono riservati agli studenti
-
-//i seguenti due semafori sevono a sincronizzare studenti e gestori durante l'inizializzazione
+//definizione visuale dei semafori ready e per la memoria condivisa
 #define SEM_READY POP_SIZE
-#define SEM_GO (1+POP_SIZE)
-
-//semaforo di scrittura nei campi group
-#define WRITE_GROUP (2+POP_SIZE)
-//semaforo di mutua esclusione per la modifica di lettori_group
-#define MUTEX_GROUP (3+POP_SIZE)
-
-//semaforo di scrittura nel campo time
-#define WRITE_TIME (4+POP_SIZE)
-//semaforo di mutua esclusione per la modifica di lettori_time
-#define MUTEX_TIME (5+POP_SIZE)
-
-//numero totale di semafori
-#define N_SEM (6+POP_SIZE)
+#define SEM_SHM POP_SIZE+1
+#define N_SEM POP_SIZE+1
 
 union semun {
     int val;                    // value for SETVAL
@@ -51,8 +35,5 @@ int reserve_sem(int semid, int semnum);
 
 // Release semaphore - incremento di 1
 int release_sem(int semid, int semnum);
-
-// Test semaphore if is zero
-int test_sem_zero(int semid, int semnum);
 
 #endif

@@ -14,6 +14,12 @@ int get_sem_val(int semid, int semnum) {
         return semctl(semid, semnum, GETVAL, arg);
 }
 
+// Ritorna il valore del semaforo (NON considerando valori negativi)
+int get_sem_val2(int semid, int semnum) {
+    union semun arg;
+        return semctl(semid, semnum, GETVAL, arg);
+}
+
 // Inizializzazione del semaforo a valore inserito da utente
 int init_sem(int semid, int semnum, int semval) {
    union semun arg;
@@ -38,8 +44,8 @@ int init_sem_in_use(int semid, int semnum) {
 // Reserve semaphore - decremento di 1
 int reserve_sem(int semid, int semnum) {
    struct sembuf sops;
-   sops.sem_num = semnum; //numero del semaforo
-   sops.sem_op = -1;      //operazione da compiere
+   sops.sem_num = semnum;
+   sops.sem_op = -1;
    sops.sem_flg = 0;
    return semop(semid, &sops, 1);
 }
@@ -49,15 +55,6 @@ int release_sem(int semid, int semnum) {
    struct sembuf sops;
    sops.sem_num = semnum;
    sops.sem_op = 1;
-   sops.sem_flg = 0;
-   return semop(semid, &sops, 1);
-}
-
-// Test semaphore if is zero
-int test_sem_zero(int semid, int semnum) {
-   struct sembuf sops;
-   sops.sem_num = semnum;
-   sops.sem_op = 0;
    sops.sem_flg = 0;
    return semop(semid, &sops, 1);
 }

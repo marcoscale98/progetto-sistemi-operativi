@@ -1,4 +1,0 @@
-Varie:
-    - inserire/eliminare printf
-    - se si riesce alzare il voto medio di SO
-    - commentare e sistemare codice
