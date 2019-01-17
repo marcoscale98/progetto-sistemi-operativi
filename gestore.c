@@ -241,6 +241,18 @@ int main(){                 //codice del gestore
     while(waitpid(-1, NULL, 0)!=-1);
     errno=0;    //inserito solo per non far visualizzare l'errore della waitpid (è normale che dia errore)
 
+    for(i=0;i<POP_SIZE;i++){
+        if(shared->group[i].n_members!=0)
+            printf("Informazioni gruppo n°%d, is_closed: %d\n", i, shared->group[i].is_closed);
+        int j;
+        for(j=0;j<POP_SIZE;j++){
+            if(shared->student[j].group==i)
+                printf("- matricola: %d, nof_elems: %d, voto_AdE: %d\n",shared->student[j].matricola,shared->student[j].nof_elems,
+                    shared->student[j].voto_AdE);
+        }
+        printf("\n");
+    }
+
     //stampa dei dati della simulazione
     int m_AdE, m_SO;
     printf("#####################################################################\n");
