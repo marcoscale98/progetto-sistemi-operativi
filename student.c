@@ -185,7 +185,7 @@ int main(int argc,char *argv[]){
 	    //se il mio gruppo è chiuso, rifiuto gli inviti
 	    accettato_invito = rispondo_inviti(&accettato_invito, &n_rifiutati, max_reject, inviti, &is_leader);
 
-	    if (!accettato_invito && !chiudo_gruppo()) {
+	    if (!accettato_invito && !chiudo_gruppo(&is_leader)) {
 		mando_inviti(invitati, &n_invitati, nof_invites);
 	    }
 	}
