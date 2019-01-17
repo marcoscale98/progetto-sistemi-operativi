@@ -3,11 +3,13 @@
 
 #include <sys/types.h>
 #include <sys/sem.h>
+#include "config.h"
 
 //definizione visuale dei semafori ready e per la memoria condivisa
 #define SEM_READY POP_SIZE
-#define SEM_SHM POP_SIZE+1
-#define N_SEM POP_SIZE+1
+#define SEM_SHM ( 1+POP_SIZE )
+#define WRITE_SHM ( 2+POP_SIZE )
+#define N_SEM ( 3+POP_SIZE )
 
 union semun {
     int val;                    // value for SETVAL

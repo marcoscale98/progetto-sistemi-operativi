@@ -1,17 +1,16 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define POP_SIZE 50
+#define POP_SIZE 20
 #define TRUE 1
 #define FALSE 0
 #define ARG_SIZE 32
 #define IPC_KEY ftok("opt.conf",0)
-#define CRITIC_TIME 5
+
+//definizione simbolica di 'non appartiene a nessun gruppo'
+#define NOGROUP -1
 
 //definire soltanto se si vuole che si stampino dei check
-//#define DEBUG
-
-//definire soltanto se si vuole che con una TEST_ERROR si esca in caso di errore
-//#define EXIT_ON_ERROR
+#define DEBUG
 
 #endif

@@ -19,7 +19,7 @@
 //handler per SIGINT e SIGSEGV: rimuove le strutture ipc e poi uccide il process group
 void handler_sigint(int sig){
     printf("Gestore (PID: %d). Ricevuto %s: uccisione del process group\n",getpid(),strsignal(sig));
-
+    
     int sem_id, msg_id, shm_id;
     sem_id = semget(IPC_KEY,N_SEM,0666);
     TEST_ERROR;

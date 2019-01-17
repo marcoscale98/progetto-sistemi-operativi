@@ -3,7 +3,7 @@
 
 #include "shm_util.h"
 
-#define MSG_LEN 100
+#define MSG_LEN 50
 
 struct msgbuf{
    long mtype;             /* message type, sarà > 0 */
