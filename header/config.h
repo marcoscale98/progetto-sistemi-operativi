@@ -3,7 +3,7 @@
 //file header utile a un po' tutti i file .c
 
 //numero di studenti che saranno parte della simulazione
-#define POP_SIZE 1000
+#define POP_SIZE 10
 
 #define TRUE 1
 #define FALSE 0

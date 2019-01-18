@@ -13,5 +13,5 @@ sig_util.o: header/sig_util.h module/sig_util.c header/error.h header/config.h
 	@gcc -c module/sig_util.c
 conf_reader.o: header/conf_reader.h module/conf_reader.c header/error.h header/config.h
 	@gcc -c module/conf_reader.c
-clean: gestore student
+clean:
 	@rm gestore student

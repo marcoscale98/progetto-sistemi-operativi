@@ -73,7 +73,7 @@ int main(){
     }
 
     if(POP_SIZE<=1){
-        printf("Numero di Studenti invalido , inserire un numero maggiore di 1\n");
+        printf("Numero di Studenti invalido, inserire un numero maggiore di 1\n");
         exit(EXIT_FAILURE);
     }
 
@@ -117,7 +117,7 @@ int main(){
     //semaforo SEM_READY inizializzato a POPSIZE: per avvisare il gestore che tutti gli studenti sono pronti al via!
     init_sem(sem_id, SEM_READY, POP_SIZE);
     TEST_ERROR;
-    init_sem(sem_id, MSG_QUEUE, 30);
+    init_sem(sem_id, MSG_QUEUE, 50);
     TEST_ERROR;
 
     //inizializzazione memoria condivisa
@@ -172,7 +172,7 @@ int main(){
         if((int)(timer-start) == (int)(options.sim_time*(0.05*k))) {
            
             shared->time_left = options.sim_time - (int)(timer-start); //tempo rimanente
-            printf("Gestore (PID: %d): Tempo rimanente = %d secondi\n", getpid(), shared->time_left);
+            printf("Gestore (PID: %d): Tempo rimanente = %2d secondi\n", getpid(), shared->time_left);
             k++;
         }
     }
@@ -248,7 +248,7 @@ int main(){
 
     //stampa dei dati della simulazione
     int m_AdE, m_SO;
-    printf("#####################################################################\n");
+    printf("\n#####################################################################\n");
     printf("Gestore (PID: %d). Dati dei voti di Architettura degli Elaboratori:\n",getpid());
     m_AdE = print_data(AdE,POP_SIZE);
     printf("#####################################################################\n");
