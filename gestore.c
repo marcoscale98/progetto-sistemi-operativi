@@ -84,6 +84,11 @@ int main(){                 //codice del gestore
         exit(EXIT_FAILURE);
     }
 
+    if(POP_SIZE<=1 || POP_SIZE>170){
+        printf("Numero di Studenti invalido , inserire un numero maggiore di 1 e minore di 170\n");
+        exit(EXIT_FAILURE);
+    }
+
     //set di args
     char matricola[ARG_SIZE],
         prob_2[ARG_SIZE],
