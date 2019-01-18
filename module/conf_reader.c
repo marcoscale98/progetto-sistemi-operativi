@@ -12,32 +12,35 @@ static int opt_control(struct sim_opt* options){
     correct = options->prob_2>=0 && options->prob_2<=100;
     result &= correct;
     if(!correct)
-        printf("ERRORE: %s, %d. Il valore di 'prob_2' non e' corretto o mancante\n", __FILE__,__LINE__);
+        printf("ERRORE: %s, %d. Il valore di 'prob_2' non e' corretto o mancante (deve compreso tra 0 e 100)\n", __FILE__,__LINE__);
     
     correct = options->prob_3>=0 && options->prob_3<=100;
     result &= correct;
     if(!correct)
-        printf("ERRORE: %s, %d. Il valore di 'prob_3' non e' corretto o mancante\n", __FILE__,__LINE__);
+        printf("ERRORE: %s, %d. Il valore di 'prob_3' non e' corretto o mancante (deve compreso tra 0 e 100)\n", __FILE__,__LINE__);
     
     correct = options->prob_4>=0 && options->prob_4<=100;
     result &= correct;
     if(!correct)
-        printf("ERRORE: %s, %d. Il valore di 'prob_4' non e' corretto o mancante\n", __FILE__,__LINE__);
+        printf("ERRORE: %s, %d. Il valore di 'prob_4' non e' corretto o mancante (deve compreso tra 0 e 100)\n", __FILE__,__LINE__);
     
     correct = options->sim_time>=0 && options->sim_time<=TIME_LIMIT;
     result &= correct;
     if(!correct)
-        printf("ERRORE: %s, %d. Il valore di 'sim_time' non e' corretto o mancante\n", __FILE__,__LINE__);
+        printf("ERRORE: %s, %d. Il valore di 'sim_time' non e' corretto o mancante (deve compreso tra 0 e %d)\n",
+            __FILE__,__LINE__,TIME_LIMIT);
     
     correct = options->nof_invites>=0 && options->nof_invites<=MAX_VALUE;
     result &= correct;
     if(!correct)
-        printf("ERRORE: %s, %d. Il valore di 'nof_invites' non e' corretto o mancante\n", __FILE__,__LINE__);
+        printf("ERRORE: %s, %d. Il valore di 'nof_invites' non e' corretto o mancante (deve compreso tra 0 e %d)\n",
+            __FILE__,__LINE__,MAX_VALUE);
     
     correct = options->max_reject>=0 && options->max_reject<=MAX_VALUE;
     result &= correct;
     if(!correct)
-        printf("ERRORE: %s, %d. Il valore di 'max_reject' non e' corretto o mancante\n", __FILE__,__LINE__);
+        printf("ERRORE: %s, %d. Il valore di 'max_reject' non e' corretto o mancante (deve compreso tra 0 e %d)\n",
+            __FILE__,__LINE__,MAX_VALUE);
     
     correct = (options->prob_2 + options->prob_3 + options->prob_4) == 100;
     result &= correct;

@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -19,7 +18,7 @@
 #include "header/config.h"
 #include "header/stud.h"
 
-
+//scrive i parametri della simulazione sul file di log
 int write_log(struct sim_opt opt, int voto_AdE, int voto_SO){
     FILE *fd = fopen("logfile.log","a");
     if(fd){
@@ -33,22 +32,10 @@ int write_log(struct sim_opt opt, int voto_AdE, int voto_SO){
     return -1;    
 }
 
-void print_array(int *a, int sz){
-    if(a && sz>0){
-        printf("Stampa array\n");
-        int i;
-        for(i=0;i<sz;i++){
-            printf("Student[%d]= %d\n",i,a[i]);
-        }
-    }
-}
-
 // stampa per ogni voto il numero di studenti che ha tale voto
 int print_data(int array[], int size){
     if(array && size>0){
-        //print_array(array,size);
         printf("VOTO\tFREQUENZA\n");
-
         int v, i,cnt, sum=0;
         for(v=0;v<=30;v++){
             for(i=0, cnt=0;i<size;i++){
@@ -66,7 +53,8 @@ int print_data(int array[], int size){
     return -1;
 }
 
-int main(){                 //codice del gestore
+//codice del gestore
+int main(){
     //set degli handler
     sa_sigsegv();
     TEST_ERROR;
@@ -105,7 +93,7 @@ int main(){                 //codice del gestore
     int sem_id, shm_id, msg_id;
     sem_id = semget(IPC_KEY,N_SEM,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
-    msg_id = msgget(IPC_KEY, IPC_CREAT|IPC_EXCL|0666);
+    msg_id = msgget(IPC_KEY,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
     shm_id = shmget(IPC_KEY,SHM_SIZE,IPC_CREAT|IPC_EXCL|0666);
     TEST_ERROR;
@@ -114,7 +102,7 @@ int main(){                 //codice del gestore
     shared = shmat(shm_id,NULL,0);
     TEST_ERROR;
     if(sem_id==-1 || msg_id==-1 || shm_id==-1 ||shared==(void *)-1){
-        printf("Gestore (PID: %d). Errore nella creazione delle IPCS\n",getpid());
+        printf("ERRORE: PID= %d. Errore nella creazione delle IPCS\n",getpid());
         exit(EXIT_FAILURE);
     }
     
@@ -137,8 +125,9 @@ int main(){                 //codice del gestore
     shared->lettori = 0;
 
 #ifdef DEBUG
-    printf("Gestore (PID: %d). Create IPCS e inizializzate\n",getpid());
+    printf("Create IPCS e inizializzate\n");
 #endif
+
     //creazione dei figli
     int value, i; 
     for(i=0, value=-1;value && i<POP_SIZE;i++){
@@ -158,11 +147,12 @@ int main(){                 //codice del gestore
                 break;
         }    
     }
+
 #ifdef DEBUG
-    printf("_Gestore (PID: %d). Creati figli\n",getpid());
+    printf("Creati figli\n");
 #endif
+
     //attesa dell'inizializzazione degli studenti
-    //while(get_sem_val(sem_id,SEM_READY)!=-POP_SIZE);
     test_sem_zero(sem_id, SEM_READY);
     
     //set del timer e inizio simulazione
@@ -182,10 +172,7 @@ int main(){                 //codice del gestore
         if((int)(timer-start) == (int)(options.sim_time*(0.05*k))) {
            
             shared->time_left = options.sim_time - (int)(timer-start); //tempo rimanente
-            //#ifdef DEBUG
-            printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), shared->time_left);
-            //#endif
-
+            printf("Gestore (PID: %d): Tempo rimanente = %d secondi\n", getpid(), shared->time_left);
             k++;
         }
     }
@@ -204,11 +191,11 @@ int main(){                 //codice del gestore
     errno=0; //perchè la IPC_NOWAIT genera un errore se non trova nulla
     
 #ifdef DEBUG
-    printf("_Gestore (PID: %d). Calcolo dei voti\n",getpid());
+    printf("_Calcolo dei voti\n",getpid());
 #endif
+    
     //CALCOLO DEI VOTI
     int AdE[POP_SIZE], SO[POP_SIZE];
-    
     for(i=0;i<POP_SIZE;i++){
         //contiene la struttura dello studente in posizione i
         struct info_student stud = shared->student[i];
