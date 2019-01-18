@@ -17,8 +17,10 @@
 //semaforo di mutua esclusione per la modifica di lettori_group
 #define MUTEX (3+POP_SIZE)
 
+#define MSG_QUEUE (4+POP_SIZE)
+
 //numero totale di semafori
-#define N_SEM (4+POP_SIZE)
+#define N_SEM (5+POP_SIZE)
 
 union semun {
     int val;                    // value for SETVAL

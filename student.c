@@ -192,8 +192,8 @@ int main(int argc,char *argv[]){
 		    /*#ifdef DEBUG
 		    printf("Valore semaforo %d: %d\n", j, get_sem_val2(sem_id, j));
 		    #endif*/
-		    invita_studente(j);
-		    invitati[j]=INVITATO;
+		    if(invita_studente(j)==0)
+			invitati[j]=INVITATO;
 		    //release semaforo su chi ho invitato
 		    release_sem(sem_id, j);
 		//}
@@ -203,7 +203,6 @@ int main(int argc,char *argv[]){
 		}
 	    }
 	}
-	
     }
 }
 
@@ -240,7 +239,7 @@ int controllo_risposte(int *is_leader, int *invitati, int n_invitati, int *invit
     //controlla se ha ricevuto risposta agli inviti
     while(msgrcv(msg_id, &risposta, sizeof(risposta.text), (long)(student->matricola+100), IPC_NOWAIT)!=-1){ //i messaggi non vengono eliminati dalla coda: per permettere di leggere anche gli inviti
 	//release semaforo del mio processo
-	release_sem(sem_id,student->matricola);
+	//release_sem(sem_id,student->matricola);
 
 	sscanf(risposta.text,"%s %d", messaggio, &mittente);
 
@@ -266,6 +265,7 @@ int controllo_risposte(int *is_leader, int *invitati, int n_invitati, int *invit
 	    invitati[mittente]=RISPOSTO;
 	}
 	else if(strcmp("Invito", messaggio)==0){
+	    release_sem(sem_id, MSG_QUEUE);
 	    fine_lettore(sem_id);
 	    inviti[mittente]=INVITATO;
 	}
@@ -276,7 +276,7 @@ int controllo_risposte(int *is_leader, int *invitati, int n_invitati, int *invit
 	}
 
 	//reserve sul mio semaforo
-	reserve_sem(sem_id, student->matricola);
+	//reserve_sem(sem_id, student->matricola);
     }
     //release semaforo del mio processo
     release_sem(sem_id,student->matricola);
@@ -464,20 +464,23 @@ void inserisci_nel_mio_gruppo(int matricola, int *is_leader) {
     }
 }
 
-void invita_studente(int destinatario){
+int invita_studente(int destinatario){
     struct msgbuf invito;
-    int msg_id=msgget(IPC_KEY, 0666);
+    int msg_id=msgget(IPC_KEY, 0666), sem_id =semget(IPC_KEY, N_SEM, 0666);
     
     invito.mtype = (long)(destinatario+100);//per evitare matricole=0
     sprintf(invito.text,"Invito %d", student->matricola);
 
-    if(msgsnd(msg_id, &invito,sizeof(invito.text),0)==-1) {
-        fprintf(stderr, "%s: %d. Errore in msgsnd #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-    #ifdef DEBUG
+    if(reserve_sem_nowait(sem_id, MSG_QUEUE)==0) {
+	msgsnd(msg_id, &invito,sizeof(invito.text),IPC_NOWAIT);
+	#ifdef DEBUG
 	printf("Il Mittente : %d ha invitato il Destinatario %d\n",student->matricola,destinatario);
-    #endif   
+	#endif
+        return 0;
+    }
+    else
+	return -1;
+       
 }
 
 void rifiuta_invito(int mittente){

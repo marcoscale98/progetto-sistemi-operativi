@@ -37,7 +37,7 @@ int chiudo_gruppo(int *is_leader, int hanno_risp);
 
 void inserisci_nel_mio_gruppo(int matricola, int *is_leader);
 
-void invita_studente(int destinatario);
+int invita_studente(int destinatario);
 
 void rifiuta_invito(int mittente);
 

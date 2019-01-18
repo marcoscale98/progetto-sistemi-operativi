@@ -124,6 +124,8 @@ int main(){                 //codice del gestore
     //semaforo SEM_READY inizializzato a POPSIZE: per avvisare il gestore che tutti gli studenti sono pronti al via!
     init_sem(sem_id, SEM_READY, POP_SIZE);
     TEST_ERROR;
+    init_sem(sem_id, MSG_QUEUE, 30);
+    TEST_ERROR;
 
     //inizializzazione memoria condivisa
     shared->time_left = options.sim_time;
