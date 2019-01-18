@@ -56,11 +56,11 @@ int waiting_answers(int *array){
     return -1;
 }
 
-int test_reset_invites(int *array){
+int test_reset_invites(int *array, int my_matricola){
     if(array){
         int i;
         for(i=0;i<POP_SIZE;i++){
-            if(array[i]!=ANSWERED)
+            if(my_matricola%2==i%2 && array[i]!=ANSWERED)
                 return FALSE;
         }
         for(i=0;i<POP_SIZE;i++){
@@ -76,7 +76,7 @@ int choose_student(struct info_sim* shm, int* array, int my_matricola){
     if(shm && array && my_matricola>=0){
         struct info_student this_student = shm->student[my_matricola];
         int voto, i, student_invited;
-        test_reset_invites(array);
+        test_reset_invites(array, my_matricola);
         //se il voto dello studente e' compreso tra 27 e 30
         if(this_student.voto_AdE>=27){
             //scorro i voti dal piu' basso
@@ -85,8 +85,10 @@ int choose_student(struct info_sim* shm, int* array, int my_matricola){
                 for(i=0;i<POP_SIZE;i++){
                     //lo studente e' dello stesso turno e ha lo stesso nof_elems
                     // e non sto aspettando risposta da lui e non appartiene a nessun gruppo
+                    //
+                    // shm->student[i].nof_elems==this_student.nof_elems &&
                     if(shm->student[i].voto_AdE==voto && i!=my_matricola && i%2==my_matricola%2 &&
-                       shm->student[i].nof_elems==this_student.nof_elems && array[i]==AVAILABLE &&
+                       array[i]==AVAILABLE &&
                        shm->student[i].group==NOGROUP)  //CRITICO!
                         student_invited = i;
                 }
@@ -247,20 +249,24 @@ int main(int argc,char *argv[]){
                (this_student->group == NOGROUP || shared->group[this_student->group].number < this_student->nof_elems) && //o e' chiuso
                state!=MEMBER){
                 int student_invited = choose_student(shared,array_invites,this_student->matricola);
+                #ifdef DEBUG
+                printf("Lo studente %d ha scelto di invitare %d\n", this_student->matricola, student_invited);
+                #endif
                 message.mtype = student_invited+100;
                 sprintf(message.text,"%d invite",this_student->matricola);
                 
                 //effettuo la reserve sul semaforo con la matricola dello studente che ho scelto
                 reserve_sem(sem_id,student_invited);
                 // ############### SEZIONE CRITICA ###########################
-                msgsnd(msg_id,&message,sizeof(message.text),0);
+                msgsnd(msg_id,&message,MSG_LEN,0);
                 TEST_ERROR;
                 // ############### FINE SEZIONE CRITICA ######################
                 //rilascio il semaforo dello studente invitato
                 release_sem(sem_id,student_invited);
 
                 #ifdef DEBUG
-                printf("Lo studente %d ha invitato %d\n", this_student->matricola, student_invited);
+                printf("Lo studente %d ha invitato %d\nMessage: %s, type: %ld\n", this_student->matricola, student_invited,
+                        message.text, message.mtype);
                 #endif
 
                 array_invites[student_invited]=WAIT_ANSW;
