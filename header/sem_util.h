@@ -34,9 +34,6 @@ union semun {
 // Ritorna il valore del semaforo (consideando anche valori negativi)
 int get_sem_val(int semid, int semnum);
 
-// Ritorna il valore del semaforo
-int get_sem_val2(int semid, int semnum);
-
 // Inizializzazione del semaforo a valore inserito da utente
 int init_sem(int semid, int semnum, int semval);
 
