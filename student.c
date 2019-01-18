@@ -24,7 +24,7 @@ int critic_time, closing_time;
 //handler per SIGUSR1: per processi studente
 void handler_sigusr1(int sig){
     #ifdef DEBUG
-	//printf("Student (PID: %d). Bloccato. Aspetto il voto\n",getpid());
+	printf("Student (PID: %d). Bloccato. Aspetto il voto\n",getpid());
     #endif
     struct msgbuf message;
     int msg_id = msgget(IPC_KEY, 0666);
@@ -51,16 +51,7 @@ int main(int argc,char *argv[]){
         printf("Numero di argomenti inseriti non corretto\n");
         exit(EXIT_FAILURE);
     }
-/*
-#ifdef DEBUG
-    printf("_Student (PID: %d). Parametri inizializzati\n",getpid());
-    printf("_matricola: %s\n",argv[1]);
-    printf("_prob_2: %s\n", argv[2]);
-    printf("_prob_3: %s\n", argv[3]);
-    printf("_nof_invites: %s\n", argv[4]);
-    printf("_max_reject: %s\n", argv[5]);
-#endif
-*/
+
     //set handler
     sa_sigusr1();
     TEST_ERROR;
@@ -77,11 +68,11 @@ int main(int argc,char *argv[]){
     TEST_ERROR;
     
     int matricola = atoi(argv[1]);
-/*
+
 #ifdef DEBUG
     printf("_Student (PID: %d). IPC agganciate\n",getpid());
 #endif
-* */
+
     //INIZIALIZZAZIONE MEMORIA CONDIVISA
     aula = (struct info_sim *)shmat(shm_id, NULL, 0666);
     TEST_ERROR;
@@ -101,19 +92,11 @@ int main(int argc,char *argv[]){
         
     student->matricola = atoi(argv[1]);
     student->group = NOGROUP;
- /*   
-#ifdef DEBUG
-    printf("_Student (PID: %d). prima parte inizializzazione fatta\n",getpid());
-#endif  
-*/
+    
     //inizializzazione voto_AdE
     srand(getpid());
     student->voto_AdE = rand()%13 + 18;  //compreso tra 18 e 30
-    /*
-#ifdef DEBUG
-    printf("_Student (PID: %d). voto_AdE determinato\n",getpid());
-#endif
-*/  
+
     //inizializzazione nof_elems
     int val = rand()%POP_SIZE;
     if(val<POP_SIZE*prob_2)
@@ -122,18 +105,14 @@ int main(int argc,char *argv[]){
         student->nof_elems = 3;
     else //if(val>=popsize*(prob_2+prob_3) && val<popsize)
         student->nof_elems = 4;
-/*     
-#ifdef DEBUG
-    printf("_Student (PID: %d). nof_elems determinato\n",getpid());
-#endif  
-* */
+
     //INIZIALIZZAZIONE VARIABILI GRUPPO
     //inizialmente uno studente non fa parte di nessun gruppo
     my_group->n_members=0;
     my_group->is_closed=FALSE;
     my_group->max_voto=0;
     //non c'è bisogno di un semaforo perchè ogni studente scrive in un'area diversa
-/*
+
 #ifdef DEBUG
     printf("_Student (PID: %d). Student inizializzato\n"\
 				"_student->matricola: %d\n"\
@@ -151,7 +130,7 @@ int main(int argc,char *argv[]){
     getpid(),student->matricola, prob_2, prob_3, nof_invites, max_reject, student->group,
     student->voto_AdE, student->nof_elems, my_group->n_members, my_group->is_closed, my_group->max_voto);
 #endif
-  */ 
+
 #ifdef DEBUG
     printf("_Student (PID: %d). Aspetto l'inizio della simulazione\n",getpid());
 #endif 
@@ -186,20 +165,14 @@ int main(int argc,char *argv[]){
 	    int j;
 	    for(j=0;j<POP_SIZE;j++) {
 		if(invitati[j]==DA_INVITARE) {
-		    //controllo se posso invitarlo
-		//if(reserve_sem_nowait(sem_id, j)==0) {
+		    //reserve semaforo su chi ho invitato
                     reserve_sem(sem_id,j);
-		    /*#ifdef DEBUG
-		    printf("Valore semaforo %d: %d\n", j, get_sem_val2(sem_id, j));
-		    #endif*/
+
 		    if(invita_studente(j)==0)
 			invitati[j]=INVITATO;
 		    //release semaforo su chi ho invitato
 		    release_sem(sem_id, j);
-		//}
-		    //errno=0;
-		    //altrimenti provo ad invitare gli altri
-		    //altrimenti esco e vado a rispondere agli inviti
+
 		}
 	    }
 	}
@@ -238,8 +211,6 @@ int controllo_risposte(int *is_leader, int *invitati, int n_invitati, int *invit
     reserve_sem(sem_id, student->matricola);
     //controlla se ha ricevuto risposta agli inviti
     while(msgrcv(msg_id, &risposta, sizeof(risposta.text), (long)(student->matricola+100), IPC_NOWAIT)!=-1){ //i messaggi non vengono eliminati dalla coda: per permettere di leggere anche gli inviti
-	//release semaforo del mio processo
-	//release_sem(sem_id,student->matricola);
 
 	sscanf(risposta.text,"%s %d", messaggio, &mittente);
 
@@ -274,9 +245,6 @@ int controllo_risposte(int *is_leader, int *invitati, int n_invitati, int *invit
 	    fprintf(stderr, "%s: %d. Errore nella ricezione della risposta all'invito #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
 	    exit(EXIT_FAILURE);
 	}
-
-	//reserve sul mio semaforo
-	//reserve_sem(sem_id, student->matricola);
     }
     //release semaforo del mio processo
     release_sem(sem_id,student->matricola);
@@ -398,9 +366,8 @@ int stesso_turno (struct info_student *mat1, struct info_student *mat2) {
 int chiudo_gruppo(int *is_leader, int hanno_risp) {
     int sem_id=semget(IPC_KEY, N_SEM, 0666);
 
-    // (valutare se tenerlo)
     reserve_sem(sem_id, WRITE);
-    //
+
 
     //se è già chiuso il gruppo, non si fa nulla
     if (my_group->is_closed);
@@ -432,9 +399,8 @@ int chiudo_gruppo(int *is_leader, int hanno_risp) {
     }
     int closed = my_group->is_closed;
 
-    // (valutare se tenerlo)
     release_sem(sem_id, WRITE);
-    //
+
 
     return closed;
 }
