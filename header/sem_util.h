@@ -13,17 +13,12 @@
 #define SEM_GO (1+POP_SIZE)
 
 //semaforo di scrittura nei campi group
-#define WRITE_GROUP (2+POP_SIZE)
+#define WRITE (2+POP_SIZE)
 //semaforo di mutua esclusione per la modifica di lettori_group
-#define MUTEX_GROUP (3+POP_SIZE)
-
-//semaforo di scrittura nel campo time
-#define WRITE_TIME (4+POP_SIZE)
-//semaforo di mutua esclusione per la modifica di lettori_time
-#define MUTEX_TIME (5+POP_SIZE)
+#define MUTEX (3+POP_SIZE)
 
 //numero totale di semafori
-#define N_SEM (6+POP_SIZE)
+#define N_SEM (4+POP_SIZE)
 
 union semun {
     int val;                    // value for SETVAL

@@ -60,7 +60,7 @@ int print_data(int array[], int size){
                 sum += cnt*v;
             }
         }
-        printf("VOTO MEDIO = %d\n",sum/POP_SIZE);
+        printf("VOTO MEDIO = %d\n\n",sum/POP_SIZE);
         return sum/POP_SIZE;
     }
     return -1;
@@ -114,13 +114,9 @@ int main(){                 //codice del gestore
     }
     
     //inizializzazione dei semafori
-    init_sem_available(sem_id,MUTEX_TIME);
+    init_sem_available(sem_id,MUTEX);
     TEST_ERROR;
-    init_sem_available(sem_id,MUTEX_GROUP);
-    TEST_ERROR;
-    init_sem_available(sem_id,WRITE_TIME);
-    TEST_ERROR;
-    init_sem_available(sem_id,WRITE_GROUP);
+    init_sem_available(sem_id,WRITE);
     TEST_ERROR;
     //semaforo SEM_GO inizializzato a 0: per bloccare gli studenti dopo la loro inizializzazione
     init_sem_in_use(sem_id,SEM_GO);
@@ -131,7 +127,7 @@ int main(){                 //codice del gestore
 
     //inizializzazione memoria condivisa
     shared->time_left = options.sim_time;
-    shared->lettori_group = 0;
+    shared->lettori = 0;
 
 #ifdef DEBUG
     printf("Gestore (PID: %d). Create IPCS e inizializzate\n",getpid());
@@ -238,20 +234,23 @@ int main(){                 //codice del gestore
     //aspetto che gli studenti abbiano ricevuto e stampato i voti
     while(waitpid(-1, NULL, 0)!=-1);
     errno=0;    //inserito solo per non far visualizzare l'errore della waitpid (è normale che dia errore)
-    
-#ifdef DEBUG
+
+    #ifdef DEBUG
+    printf("\n#####################################################################\n"\
+            "STATO FINALE DEI GRUPPI\n\n");
     for(i=0;i<POP_SIZE;i++){
-        if(shared->group[i].n_members!=0)
+        if(shared->group[i].n_members!=0){
             printf("Informazioni gruppo n°%d, is_closed: %d\n", i, shared->group[i].is_closed);
-        int j;
-        for(j=0;j<POP_SIZE;j++){
-            if(shared->student[j].group==i)
-                printf("- matricola: %d, nof_elems: %d, voto_AdE: %d\n",shared->student[j].matricola,shared->student[j].nof_elems,
-                    shared->student[j].voto_AdE);
+            int j;
+            for(j=0;j<POP_SIZE;j++){
+                if(shared->student[j].group==i)
+                    printf("- matricola: %d, nof_elems: %d, voto_AdE: %d\n",shared->student[j].matricola,shared->student[j].nof_elems,
+                        shared->student[j].voto_AdE);
+            }
+            printf("\n");
         }
-        printf("\n");
     }
-#endif
+    #endif
 
     //stampa dei dati della simulazione
     int m_AdE, m_SO;
