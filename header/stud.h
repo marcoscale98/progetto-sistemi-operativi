@@ -23,7 +23,7 @@ int controllo_risposte(int *is_leader, int *invitati, int n_invitati, int *invit
 //controlla gli inviti ricevuti e li valuta
 //return true se accetta un invito
 //return false se non accetta
-int rispondo_inviti(int *accettato, int *is_leader,int *n_rifiutati, int max_reject, int *inviti, int hanno_risposto);
+int rispondo_inviti(int *accettato, int *is_leader,int *n_rifiutati, int max_reject, int *inviti, int hanno_risp);
 
 int max(int num1, int num2);
 

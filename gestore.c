@@ -177,14 +177,14 @@ int main(){                 //codice del gestore
 #endif
     int k=1;
     while((int)(time(&timer)-start) < options.sim_time) {
-        //il timer si aggiorna ogni 10% di sim_time
-        if((int)(timer-start) == (int)(options.sim_time*(0.10*k))) {
-            reserve_sem(sem_id, MUTEX_TIME);
+        //il timer si aggiorna ogni 5% di sim_time
+        if((int)(timer-start) == (int)(options.sim_time*(0.05*k))) {
+           
             shared->time_left = options.sim_time - (int)(timer-start); //tempo rimanente
             //#ifdef DEBUG
             printf("_Gestore (PID: %d): Tempo rimanente = %d secondi.\n", getpid(), shared->time_left);
             //#endif
-            release_sem(sem_id, MUTEX_TIME);
+
             k++;
         }
     }
