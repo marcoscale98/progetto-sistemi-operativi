@@ -16,7 +16,6 @@
 #include "header/sem_util.h"
 #include "header/sig_util.h"
 #include "header/shm_util.h"
-#include "header/time_util.h"
 #include "header/config.h"
 #include "header/stud.h"
 
@@ -133,7 +132,6 @@ int main(){                 //codice del gestore
     //inizializzazione memoria condivisa
     shared->time_left = options.sim_time;
     shared->lettori_group = 0;
-    shared->lettori_time = 0;
 
 #ifdef DEBUG
     printf("Gestore (PID: %d). Create IPCS e inizializzate\n",getpid());
@@ -240,6 +238,7 @@ int main(){                 //codice del gestore
     //aspetto che gli studenti abbiano ricevuto e stampato i voti
     while(waitpid(-1, NULL, 0)!=-1);
     errno=0;    //inserito solo per non far visualizzare l'errore della waitpid (è normale che dia errore)
+    
 #ifdef DEBUG
     for(i=0;i<POP_SIZE;i++){
         if(shared->group[i].n_members!=0)

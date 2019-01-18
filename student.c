@@ -307,12 +307,12 @@ int max(int num1, int num2) {
 
 void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
     struct info_student *stud2;
-    int i, max_invites, n=0;
+    int matricola, max_invites, n=0;
     int sem_id=semget(IPC_KEY, N_SEM, 0666);
     
     //n conta gli inviti già inviati o da inviare (senza una risposta)
-    for(i=0;i<POP_SIZE;i++) {
-	if(invitati[i]==DA_INVITARE || invitati[i]==INVITATO) 
+    for(matricola=0;matricola<POP_SIZE;matricola++) {
+	if(invitati[matricola]==DA_INVITARE || invitati[matricola]==INVITATO) 
 	    n++;
     }
     if(student->group==NOGROUP)
@@ -321,13 +321,13 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites) {
         max_invites=student->nof_elems-my_group->n_members; //io sono incluso in n_members
     
     //non si possono invitare più studenti di quanti ne potrebbe contenere un gruppo
-    for(i=0; i<POP_SIZE && n<max_invites && *n_invitati<nof_invites; i++) {
+    for(matricola=0; matricola<POP_SIZE && n<max_invites && *n_invitati<nof_invites; matricola++) {
 
-        stud2 = &(aula->student[i]);
+        stud2 = &(aula->student[matricola]);
 	 
 	/*************STRATEGIA DI SCALE ****************************************/
         //se sono dello stesso turno, non hanno un gruppo e non sono io stesso (imprescindibile per un invito)
-        if(i!=student->matricola && stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
+        if(matricola!=student->matricola && stesso_turno(stud2, student) && stud2->group==NOGROUP && invitati[stud2->matricola]==LIBERO) {
             
 
             //se hanno la stessa preferenza di nof_elems
