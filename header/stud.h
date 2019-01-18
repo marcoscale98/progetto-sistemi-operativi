@@ -33,7 +33,7 @@ void algoritmo_inviti(int *invitati, int *n_invitati, int nof_invites);
 int stesso_turno (struct info_student *mat1, struct info_student *mat2);
 
 //decido se conviene chiudere il gruppo(return true) oppure no(return false)
-int chiudo_gruppo(int *is_leader);
+int chiudo_gruppo(int *is_leader, int accettato_invito);
 
 void inserisci_nel_mio_gruppo(int matricola, int *is_leader);
 

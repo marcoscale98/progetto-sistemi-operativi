@@ -8,6 +8,7 @@
 #define ARG_SIZE 32
 #define IPC_KEY ftok("opt.conf",0)
 
+
 //definire soltanto se si vuole che si stampino dei check
 #define DEBUG
 

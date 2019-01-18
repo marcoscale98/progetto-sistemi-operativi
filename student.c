@@ -182,7 +182,7 @@ int main(int argc,char *argv[]){
 	
 	accettato_invito = rispondo_inviti(&accettato_invito, &is_leader, &n_rifiutati, max_reject, inviti, hanno_risp);
 	
-	close_group = chiudo_gruppo(&is_leader);
+	close_group = chiudo_gruppo(&is_leader, accettato_invito);
 	//release semaforo del mio processo
 	release_sem(sem_id,student->matricola);
 
@@ -195,9 +195,9 @@ int main(int argc,char *argv[]){
 		if(invitati[j]==DA_INVITARE) {
 		    //controllo se posso invitarlo
 		    if(reserve_sem_nowait(sem_id, j)==0) {
-			#ifdef DEBUG
+			/*#ifdef DEBUG
 			printf("Valore semaforo %d: %d\n", j, get_sem_val2(sem_id, j));
-			#endif
+			#endif*/
 			invita_studente(j);
 			invitati[j]=INVITATO;
 			//release semaforo su chi ho invitato
@@ -363,11 +363,14 @@ int stesso_turno (struct info_student *mat1, struct info_student *mat2) {
 }
 
 //decido se conviene chiudere il gruppo(return true) oppure no(return false)
-int chiudo_gruppo(int *is_leader) {
+int chiudo_gruppo(int *is_leader, int accettato_invito) {
     int sem_id=semget(IPC_KEY, N_SEM, 0666);
 
     //se è già chiuso il gruppo, non si fa nulla
     if (my_group->is_closed);
+    //se ho accettato un invito non posso fare nulla
+    else if(accettato_invito);
+    //quando devo chiudere il gruppo
     else if(my_group->n_members==4 || my_group->n_members==student->nof_elems || aula->time_left <= (closing_time)) {
 	if(student->group==NOGROUP) {
 	    //se devo chiudere il gruppo da solo

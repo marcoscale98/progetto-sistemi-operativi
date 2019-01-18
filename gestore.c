@@ -205,7 +205,7 @@ int main(){                 //codice del gestore
 #ifdef DEBUG
     printf("_Gestore (PID: %d). Calcolo dei voti\n",getpid());
 #endif
-    //calcolo dei voti
+    //CALCOLO DEI VOTI
     int AdE[POP_SIZE], SO[POP_SIZE];
     
     for(i=0;i<POP_SIZE;i++){
@@ -240,7 +240,7 @@ int main(){                 //codice del gestore
     //aspetto che gli studenti abbiano ricevuto e stampato i voti
     while(waitpid(-1, NULL, 0)!=-1);
     errno=0;    //inserito solo per non far visualizzare l'errore della waitpid (è normale che dia errore)
-
+#ifdef DEBUG
     for(i=0;i<POP_SIZE;i++){
         if(shared->group[i].n_members!=0)
             printf("Informazioni gruppo n°%d, is_closed: %d\n", i, shared->group[i].is_closed);
@@ -252,6 +252,7 @@ int main(){                 //codice del gestore
         }
         printf("\n");
     }
+#endif
 
     //stampa dei dati della simulazione
     int m_AdE, m_SO;
