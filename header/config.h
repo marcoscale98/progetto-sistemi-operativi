@@ -1,6 +1,6 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
-
+//file header utile a un po' tutti i file .c
 
 #define POP_SIZE 50
 #define TRUE 1
